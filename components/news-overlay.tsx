@@ -291,7 +291,7 @@ export function NewsOverlay({
               원문 보기 <ExternalLink className="size-3.5" />
             </a>
             <Link
-              href={`/reporting?displayNews=${displayNews.id}`}
+              href={`/reporting?news=${displayNews.id}`}
               onClick={onClose}
               className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >

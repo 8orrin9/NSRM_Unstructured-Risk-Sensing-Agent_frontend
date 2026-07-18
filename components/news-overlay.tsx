@@ -192,7 +192,7 @@ export function NewsOverlay({
 
               {displayNews.tags && displayNews.tags.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">리스크 태그</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">유관 태그</span>
                   <div className="flex flex-wrap gap-1.5">
                     {displayNews.tags.map((tag) => (
                       <span
@@ -208,7 +208,7 @@ export function NewsOverlay({
 
               {/* Severity score with hover tooltip and 4-level gauge */}
               <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3">
-                <span className="text-xs text-muted-foreground">심각도</span>
+                <span className="text-xs text-muted-foreground">AI 리스크 평가</span>
                 <div className="flex flex-1 items-center gap-3">
                   <div
                     className={cn('group relative rounded-full border px-3 py-1 text-sm font-bold', c?.border, c?.bg)}
@@ -245,9 +245,14 @@ export function NewsOverlay({
               {displayNews.riskJustification && (
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">AI 판단 근거</span>
-                  <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm leading-relaxed text-foreground">
-                    {displayNews.riskJustification}
-                  </p>
+                  <ul className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
+                    {displayNews.riskJustification.split(/\n+|(?<=[.!?。])\s+/).filter((s) => s.trim()).map((line, i) => (
+                      <li key={i} className="flex gap-2 text-sm leading-relaxed text-foreground">
+                        <span className="mt-1.5 size-1 shrink-0 rounded-full bg-muted-foreground" />
+                        <span>{line.trim()}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </>

@@ -4,11 +4,11 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Newspaper, Globe2, FileText, ShieldAlert } from 'lucide-react'
+import { Newspaper, Globe2, FileText } from 'lucide-react'
 
 const NAV = [
   { href: '/', label: 'Daily News', icon: Newspaper },
-  { href: '/explorer', label: 'Risk Explorer', icon: Globe2 },
+  { href: '/explorer', label: 'Explorer MAP', icon: Globe2 },
   { href: '/reporting', label: 'Reporting', icon: FileText },
 ]
 
@@ -21,12 +21,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-white/90 backdrop-blur-xl dark:bg-background/90">
         <div className="mx-auto flex h-14 w-full max-w-[1600px] items-center gap-6 px-4 md:px-8">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-              <ShieldAlert className="size-4" />
-            </span>
-            <span className="text-[15px] font-semibold tracking-tight text-foreground">
-              Risk Sensing
+          <Link href="/" className="flex items-center shrink-0">
+            <span className="text-[15px] font-semibold tracking-tight">
+              <span className="text-primary">N-SRM</span>
+              <span className="text-foreground">&nbsp;비정형 리스크 센싱 에이전트</span>
             </span>
           </Link>
 
@@ -55,18 +53,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            {/* Live indicator */}
+            {/* PoC badge — pill with pulse dot */}
             <div className="hidden items-center gap-2 rounded-full border border-border px-3 py-1.5 md:flex">
               <span className="relative flex size-1.5">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-risk-low opacity-75" />
                 <span className="relative inline-flex size-1.5 rounded-full bg-risk-low" />
               </span>
-              <span className="text-xs text-muted-foreground">Live</span>
+              <span className="text-xs text-muted-foreground">PoC</span>
             </div>
-            {/* PoC badge */}
-            <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
-              PoC
-            </span>
             <ThemeToggle />
           </div>
         </div>
@@ -77,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <footer className="border-t border-border bg-background">
         <div className="mx-auto w-full max-w-[1600px] px-4 py-4 md:px-8">
           <p className="text-xs text-muted-foreground">
-            Risk Sensing System · 반도체 공급망 리스크 센싱 통합 모니터링 (Proof of Concept)
+            NSRM 비정형 리스크 센싱 시스템 · DS 반도체 공급망 모니터링 PoC
           </p>
         </div>
       </footer>

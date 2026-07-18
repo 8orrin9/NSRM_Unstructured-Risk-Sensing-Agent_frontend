@@ -263,11 +263,11 @@ export function RiskExplorer() {
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2 text-primary">
           <Globe2 className="size-4" />
-          <span className="text-xs font-semibold uppercase tracking-wide">Risk Explorer</span>
+          <span className="text-xs font-semibold uppercase tracking-wide">Explorer MAP</span>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">리스크 대상 탐색</h1>
+        <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Daily News 관련 거점 · 공급사 탐색</h1>
         <p className="text-sm text-muted-foreground">
-          뉴스를 선택하면 지도에서 관련 거점이 강조됩니다. 지도에서 거점을 클릭하면 관련 뉴스를 확인할 수 있습니다.
+          Daily News에서 도출된 거점·공급사를 지도에서 탐색합니다. 뉴스를 선택하면 관련 거점이 강조되고, 지도에서 거점을 클릭하면 관련 뉴스를 확인할 수 있습니다.
         </p>
       </div>
 

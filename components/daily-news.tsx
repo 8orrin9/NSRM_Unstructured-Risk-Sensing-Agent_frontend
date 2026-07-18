@@ -20,8 +20,6 @@ import {
   ArrowRight,
   Layers,
   Link2,
-  Newspaper,
-  LayoutGrid,
   Plus,
   Tag,
   X,
@@ -164,7 +162,6 @@ export function DailyNews() {
     if (NEWS.length === 0 || NEWS_GROUPS.length === 0) return []
     return buildFeed(NEWS, NEWS_GROUPS)
   }, [NEWS, NEWS_GROUPS])
-  const groupCount = useMemo(() => feed.filter((f) => f.kind === 'group').length, [feed])
 
   function filteredFactorNews(factor: RiskFactor): NewsItem[] {
     // Risk Factor Monitor는 전체 뉴스를 사용 (국내 한정 해제)
@@ -214,20 +211,21 @@ export function DailyNews() {
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-primary">
               <Sparkles className="size-4" />
-              <span className="text-xs font-semibold uppercase tracking-wide">Smart Daily Brief</span>
+              <span className="text-xs font-semibold uppercase tracking-wide">Smart Daily News</span>
             </div>
             <h1 className="text-balance text-xl font-bold tracking-tight text-foreground md:text-2xl">
               스마트 데일리 뉴스
             </h1>
             <p className="text-sm text-muted-foreground">
-              {formatDate(today)} · 지난 24시간 동안 수집·분석된 공급망 리스크 뉴스
+              {formatDate(today)} · 지난 24시간 동안 수집·분석된 공급망 관련 뉴스
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <StatBox label="총 수집" value={NEWS.length} suffix="건" tone="default" />
-            <StatBox label="연관 그룹" value={groupCount} suffix="개" tone="default" />
-            <StatBox label="심각·높음" value={sevCounts.critical + sevCounts.high} suffix="건" tone="critical" />
-          </div>
+        </div>
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
+          <span className="text-xs text-muted-foreground">수집된 뉴스의 리스크 분석 결과 통계</span>
+          <span className="text-xs text-muted-foreground">
+            총 수집 <span className="font-bold tabular-nums text-foreground">{NEWS.length}</span>건
+          </span>
         </div>
         <div className="grid grid-cols-2 divide-x divide-border border-border sm:grid-cols-4">
           {SEVERITIES.map((s) => {
@@ -254,15 +252,10 @@ export function DailyNews() {
 
       {/* ── Risk Factor Monitor — white card panel ── */}
       <div className="rounded-2xl border border-border bg-card p-4">
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-baseline gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary shadow-sm">
-                  <LayoutGrid className="size-4 text-primary-foreground" />
-                </div>
-                <h2 className="text-xl font-bold tracking-tight text-foreground">Risk Factor Monitor</h2>
-              </div>
+              <h2 className="text-xl font-bold tracking-tight text-foreground">Risk Factor Monitor</h2>
               <span className="text-sm text-muted-foreground">대분류별 뉴스</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -327,25 +320,21 @@ export function DailyNews() {
           <span className="h-px flex-1 bg-insight-border" />
           <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-white/70 px-3 py-1 shadow-sm">
             <span className="size-1.5 rounded-full bg-primary" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">Core Insights</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">AI Risk Core Insights</span>
           </div>
           <span className="h-px flex-1 bg-insight-border" />
         </div>
 
         {/* ── Risk Groups ── */}
         {allGroups.length > 0 && (
-          <section className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-baseline gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary shadow-sm">
-                  <Layers className="size-4 text-primary-foreground" />
-                </div>
-                <h2 className="text-xl font-bold tracking-tight text-foreground">Risk Groups</h2>
-              </div>
-              <span className="text-sm text-muted-foreground">{allGroups.length}개 연관 그룹</span>
-              <span className="rounded-full bg-risk-critical px-2.5 py-0.5 text-[11px] font-bold text-white">
-                핵심
-              </span>
+          <section className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5 border-l-4 border-primary pl-4">
+              <h2 className="text-xl font-bold tracking-tight text-primary">
+                AI 핵심 인사이트 <span className="text-foreground">- 공급망 리스크</span>
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                뉴스 간 관계성 분석 기반으로 도출된 리스크 그룹으로, 개별 뉴스만으로는 파악이 불가한 인사이트를 AI가 분석하여 제공합니다
+              </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {allGroups.map((entry, idx) => {
@@ -408,14 +397,9 @@ export function DailyNews() {
         )}
 
         {/* ── Individual News (PAGE_SIZE + load more) ── */}
-        <section className="flex flex-col gap-4">
+        <section className="flex flex-col gap-5">
           <div className="flex flex-wrap items-baseline gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary shadow-sm">
-                <Newspaper className="size-4 text-primary-foreground" />
-              </div>
-              <h2 className="text-xl font-bold tracking-tight text-foreground">Individual News</h2>
-            </div>
+            <h2 className="text-xl font-bold tracking-tight text-foreground">Individual News</h2>
             <span className="text-sm text-muted-foreground">{allIndividuals.length}건</span>
           </div>
 
@@ -535,18 +519,6 @@ export function DailyNews() {
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
-function StatBox({ label, value, suffix, tone }: { label: string; value: number; suffix: string; tone: 'default' | 'critical' }) {
-  return (
-    <div className="flex flex-col items-end">
-      <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className={cn('text-2xl font-bold tabular-nums leading-none', tone === 'critical' ? 'text-risk-critical' : 'text-foreground')}>
-        {value}
-        <span className="ml-0.5 text-xs font-medium text-muted-foreground">{suffix}</span>
-      </span>
-    </div>
-  )
-}
-
 // ─── FactorCard ────────────────────────────────────────────────────────────────
 
 function FactorCard({
@@ -578,7 +550,7 @@ function FactorCard({
 
   return (
     <article
-      className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+      className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-md"
       style={{ borderTopWidth: 3, borderTopColor: `var(--${categoryColor.token})` }}
     >
       <button
@@ -647,10 +619,11 @@ function GroupCard({
   onToggle: () => void
   onOpenOverlay: (news: NewsItem) => void
 }) {
-  const c = severityClasses(group.severity)
+  const [showAllEntities, setShowAllEntities] = useState(false)
   const entities = group.relatedEntityIds
     .map((id) => allEntities.find((e) => e.id === id))
     .filter(Boolean)
+  const visibleEntities = showAllEntities ? entities : entities.slice(0, 1)
 
   return (
     <article
@@ -667,13 +640,6 @@ function GroupCard({
             {group.items.length}건
           </span>
           <CategoryBadge category={group.category} />
-          <SeverityBadge severity={group.severity} />
-          {group.status === 'active' && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-insight-border bg-insight-bg px-2 py-0.5 text-[11px] font-medium text-insight-muted">
-              <span className="size-1.5 animate-pulse rounded-full bg-risk-high" />
-              Live
-            </span>
-          )}
           <ChevronDown className={cn('ml-auto size-4 shrink-0 text-insight-muted transition-transform', open && 'rotate-180')} />
         </div>
         <h3 className="text-pretty text-sm font-bold leading-snug text-insight-card-foreground">{group.title}</h3>
@@ -688,12 +654,12 @@ function GroupCard({
           <div className="flex items-start gap-2 border-t border-insight-border bg-insight-bg/60 px-4 py-3">
             <Link2 className="mt-0.5 size-3.5 shrink-0 text-primary" />
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">그룹화 · 리스크 판단 근거</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">AI 그룹화 · 리스크 판단 근거</span>
               <p className="text-xs leading-relaxed text-insight-muted">{group.rationale}</p>
               {entities.length > 0 && (
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   <span className="text-[11px] text-insight-muted">연관 거점:</span>
-                  {entities.map((e) => (
+                  {visibleEntities.map((e) => (
                     <Link
                       key={e!.id}
                       href={`/explorer?entity=${e!.id}`}
@@ -703,6 +669,14 @@ function GroupCard({
                       {e!.nameKo}
                     </Link>
                   ))}
+                  {entities.length > 1 && (
+                    <button
+                      onClick={() => setShowAllEntities((v) => !v)}
+                      className="inline-flex items-center rounded border border-insight-border bg-insight-bg px-1.5 py-0.5 text-[11px] font-medium text-primary transition-colors hover:border-primary"
+                    >
+                      {showAllEntities ? '접기' : `+${entities.length - 1} 더보기`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -722,11 +696,8 @@ function GroupCard({
                       onClick={() => onOpenOverlay(n)}
                       className="flex w-full flex-col gap-1 rounded-md border border-insight-border bg-insight-bg px-3 py-2.5 text-left transition-colors hover:border-primary/60 hover:brightness-110"
                     >
-                      <div className="flex flex-wrap items-center gap-1.5">
+                      <div className="flex items-center justify-between gap-1.5">
                         <span className="text-[11px] text-insight-muted">{formatTime(n.publishedAt)} · {n.source}</span>
-                        {i === group.items.length - 1 && (
-                          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">최신</span>
-                        )}
                         <SeverityBadge severity={n.severity} />
                       </div>
                       <span className="text-pretty text-xs font-semibold leading-snug text-insight-card-foreground">{n.title}</span>

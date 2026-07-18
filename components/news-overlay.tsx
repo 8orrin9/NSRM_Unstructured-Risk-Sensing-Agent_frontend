@@ -195,10 +195,16 @@ export function NewsOverlay({
                 <div className="flex flex-col gap-2">
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">유관 태그</span>
                   <div className="flex flex-wrap gap-1.5">
+                    {/* 태그 추천 기능 비활성화 (추후 재활성화 시: recommendedTags 병합 + isRecommendedTag 앰버 하이라이팅 복원)
+                    {Array.from(new Set([...(displayNews.tags ?? []), ...(displayNews.recommendedTags ?? [])])).map((tag) => {
+                      const isRecommendedTag = displayNews.recommendedTags?.includes(tag)
+                      ...앰버 하이라이팅...
+                    })}
+                    */}
                     {displayNews.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1 rounded border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                        className="inline-flex items-center gap-1 rounded border border-border bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
                       >
                         {tag}
                       </span>
@@ -232,9 +238,9 @@ export function NewsOverlay({
                         {displayNews.impactScore} / 100
                       </span>
                     </div>
-                    {/* 4등분 게이지 바 */}
+                    {/* 4단계 게이지 바 — severity 경계(20/60/85)와 정합 (LOW/MEDIUM/HIGH/CRITICAL = 1/2/3/4칸) */}
                     <div className="flex flex-1 gap-0.5">
-                      {[0, 25, 50, 75].map((threshold) => {
+                      {[0, 20, 60, 85].map((threshold) => {
                         const isActive = displayNews.impactScore > threshold
                         let bgClass = 'bg-muted'
                         if (isActive) {

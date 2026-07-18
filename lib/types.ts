@@ -29,6 +29,7 @@ export interface NewsItem {
   keywords: string[]
   recommendedKeywords: string[] // 신규 Pool 추천 키워드
   tags: string[] // risk tags
+  recommendedTags?: string[] // 신규 EVENT 태그 추천 (매핑 실패 키워드 기반)
   relatedEntityIds: string[] // supplier / site ids
   region: string
   url: string

@@ -5,12 +5,15 @@ import { RISK_CATEGORIES, SEVERITY_META, severityClasses } from '@/lib/risk-conf
 export function SeverityBadge({
   severity,
   className,
+  format = 'both',
 }: {
   severity: Severity
   className?: string
+  format?: 'both' | 'en' | 'ko'
 }) {
   const c = severityClasses(severity)
   const meta = SEVERITY_META[severity]
+  const label = format === 'en' ? meta.en : format === 'ko' ? meta.ko : `${meta.ko} · ${meta.en}`
   return (
     <span
       className={cn(
@@ -22,7 +25,7 @@ export function SeverityBadge({
       )}
     >
       <span className={cn('size-1.5 rounded-full', c.dot)} />
-      {meta.ko} · {meta.en}
+      {label}
     </span>
   )
 }

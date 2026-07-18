@@ -75,10 +75,22 @@ export function DailyNews() {
   // Slide overlay state
   const [overlayNews, setOverlayNews] = useState<NewsItem | null>(null)
 
-  // Risk Factor section state — all open by default
-  const [openFactorIds, setOpenFactorIds] = useState<Set<RiskFactor>>(
-    new Set(Object.keys(RISK_FACTORS) as RiskFactor[]),
-  )
+  // Risk Factor section state — 행 단위 접기/펼치기 (기본 모두 펼침)
+  const [collapsedFactorRows, setCollapsedFactorRows] = useState<Set<number>>(new Set<number>())
+  // 반응형 그리드 컬럼 수 추적 (sm:2 / lg:3, 기본 3)
+  const [factorCols, setFactorCols] = useState(3)
+  useEffect(() => {
+    const smQuery = window.matchMedia('(min-width: 640px)')
+    const lgQuery = window.matchMedia('(min-width: 1024px)')
+    const update = () => setFactorCols(lgQuery.matches ? 3 : smQuery.matches ? 2 : 1)
+    update()
+    smQuery.addEventListener('change', update)
+    lgQuery.addEventListener('change', update)
+    return () => {
+      smQuery.removeEventListener('change', update)
+      lgQuery.removeEventListener('change', update)
+    }
+  }, [])
   const [factorDateFrom, setFactorDateFrom] = useState('')
   const [factorDateTo, setFactorDateTo] = useState('')
 
@@ -126,10 +138,10 @@ export function DailyNews() {
     setIndivPage(1)
   }
 
-  function toggleFactor(id: RiskFactor) {
-    setOpenFactorIds((prev) => {
+  function toggleFactorRow(rowIndex: number) {
+    setCollapsedFactorRows((prev) => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      next.has(rowIndex) ? next.delete(rowIndex) : next.add(rowIndex)
       return next
     })
   }
@@ -241,7 +253,7 @@ export function DailyNews() {
               >
                 <span className="flex items-center gap-2">
                   <span className={cn('size-2 rounded-full', c.dot)} />
-                  <span className="text-xs font-medium text-muted-foreground">{SEVERITY_META[s].ko}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{SEVERITY_META[s].en}</span>
                 </span>
                 <span className={cn('text-lg font-bold tabular-nums', c.text)}>{sevCounts[s]}</span>
               </button>
@@ -286,10 +298,11 @@ export function DailyNews() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {(Object.keys(RISK_FACTORS) as RiskFactor[]).map((factor) => {
+            {(Object.keys(RISK_FACTORS) as RiskFactor[]).map((factor, idx) => {
               const meta = RISK_FACTORS[factor]
               const items = filteredFactorNews(factor)
-              const open = openFactorIds.has(factor)
+              const rowIndex = Math.floor(idx / factorCols)
+              const open = !collapsedFactorRows.has(rowIndex)
               const topSeverity = items.reduce<Severity | null>((best, n) => {
                 if (!best) return n.severity
                 const order: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3 }
@@ -303,7 +316,7 @@ export function DailyNews() {
                   items={items}
                   topSeverity={topSeverity}
                   open={open}
-                  onToggle={() => toggleFactor(factor)}
+                  onToggle={() => toggleFactorRow(rowIndex)}
                   onOpenOverlay={setOverlayNews}
                 />
               )
@@ -343,6 +356,7 @@ export function DailyNews() {
                   <GroupCard
                     key={entry.group.id}
                     group={entry.group}
+                    index={idx}
                     entities={ENTITIES}
                     open={openRows.has(rowIndex)}
                     onToggle={() => toggleRow(rowIndex)}
@@ -608,12 +622,14 @@ function FactorCard({
 
 function GroupCard({
   group,
+  index,
   entities: allEntities,
   open,
   onToggle,
   onOpenOverlay,
 }: {
   group: ResolvedGroup
+  index: number
   entities: SupplyEntity[]
   open: boolean
   onToggle: () => void
@@ -635,6 +651,9 @@ function GroupCard({
         className="flex w-full flex-col gap-2.5 p-4 text-left transition-colors hover:brightness-110"
       >
         <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+            인사이트 {index + 1}
+          </span>
           <span className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
             <Layers className="size-3" />
             {group.items.length}건
@@ -644,7 +663,7 @@ function GroupCard({
         </div>
         <h3 className="text-pretty text-sm font-bold leading-snug text-insight-card-foreground">{group.title}</h3>
         <span className="text-xs text-insight-muted">
-          {formatTime(group.earliestAt)} → {formatTime(group.latestAt)}
+          뉴스 발행 시각 {formatTime(group.earliestAt)} → {formatTime(group.latestAt)}
         </span>
       </button>
 
@@ -698,7 +717,7 @@ function GroupCard({
                     >
                       <div className="flex items-center justify-between gap-1.5">
                         <span className="text-[11px] text-insight-muted">{formatTime(n.publishedAt)} · {n.source}</span>
-                        <SeverityBadge severity={n.severity} />
+                        <SeverityBadge severity={n.severity} format="en" />
                       </div>
                       <span className="text-pretty text-xs font-semibold leading-snug text-insight-card-foreground">{n.title}</span>
                       <span className="line-clamp-1 text-[11px] text-insight-muted">{n.summary}</span>
@@ -731,10 +750,10 @@ function NewsCard({ news, onOpen }: {
     >
       <span className={cn('mt-1.5 size-2.5 shrink-0 rounded-full', c.dot)} />
       <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <CategoryBadge category={news.category} />
-          <SeverityBadge severity={news.severity} />
           <span className="text-xs text-insight-muted">{news.source} · {formatTime(news.publishedAt)}</span>
+          <SeverityBadge severity={news.severity} format="en" className="ml-auto shrink-0" />
         </div>
         <h3 className="text-pretty text-sm font-semibold leading-snug text-insight-card-foreground">{news.title}</h3>
         <p className="line-clamp-1 text-xs text-insight-muted">{news.summary}</p>

@@ -225,7 +225,7 @@ export function Reporting() {
       </div>
 
       {/* 2-column layout: left=news selection, right=editor */}
-      <div className="grid gap-4 lg:grid-cols-[360px_1fr]" style={{ minHeight: 720 }}>
+      <div className="grid gap-4 lg:grid-cols-[340px_1fr]" style={{ minHeight: 720 }}>
 
         {/* ── Left: News selection ── */}
         <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
@@ -336,7 +336,7 @@ export function Reporting() {
             <div className="flex min-h-0 flex-1 divide-x divide-border overflow-hidden">
 
               {/* Left sub-column: sender / recipient / tone / generate */}
-              <div className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto p-4">
+              <div className="flex w-80 shrink-0 flex-col gap-4 overflow-y-auto p-4">
                 <div className="flex items-center gap-2">
                   <Users className="size-4 text-primary" />
                   <span className="text-sm font-bold text-foreground">발신 · 수신</span>
@@ -648,13 +648,13 @@ function GroupSelectCard({
           onClick={() => setExpanded((v) => !v)}
           className="flex min-w-0 flex-1 flex-col gap-1.5 text-left"
         >
-          <span className="flex flex-wrap items-center gap-1.5">
+          <span className="flex flex-nowrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground whitespace-nowrap">
               <Layers className="size-2.5" />
               그룹 {group.items.length}건
             </span>
-            <CategoryBadge category={group.category} />
-            <SeverityBadge severity={group.severity} />
+            <CategoryBadge category={group.category} className="whitespace-nowrap" />
+            <SeverityBadge severity={group.severity} format="en" className="ml-auto shrink-0" />
           </span>
           <span className="text-xs font-semibold leading-snug text-foreground">{group.title}</span>
         </button>

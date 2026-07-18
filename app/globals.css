@@ -236,6 +236,19 @@
   0% { transform: scale(0.8); opacity: 0.6; }
   100% { transform: scale(1.8); opacity: 0; }
 }
+/* 지도 마커 상시 이름 라벨 */
+.leaflet-tooltip.risk-marker-label {
+  background: oklch(1 0 0 / 0.85);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--foreground);
+  box-shadow: 0 1px 3px oklch(0.2 0 0 / 0.15);
+  white-space: nowrap;
+}
+.leaflet-tooltip.risk-marker-label::before {
+  display: none;
+}
 
 .prose-report { line-height: 1.75; }
 .prose-report > *:first-child { margin-top: 0; }

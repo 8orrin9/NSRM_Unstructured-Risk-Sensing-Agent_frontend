@@ -124,12 +124,21 @@ export function Reporting() {
     return result
   }, [feed, query, dateFilter])
 
+  // 그룹을 상단으로 정렬 (Array.sort는 안정 정렬이므로 그룹/개별 각 그룹 내부의 latestAt 순서는 유지)
+  const groupFirst = (a: FeedEntry, b: FeedEntry) =>
+    (a.kind === 'group' ? 0 : 1) - (b.kind === 'group' ? 0 : 1)
   const riskEntries = useMemo(
-    () => filteredFeed.filter((e) => (e.kind === 'group' ? e.group.isRisk : isRiskNews(e.news))),
+    () =>
+      filteredFeed
+        .filter((e) => (e.kind === 'group' ? e.group.isRisk : isRiskNews(e.news)))
+        .sort(groupFirst),
     [filteredFeed],
   )
   const normalEntries = useMemo(
-    () => filteredFeed.filter((e) => (e.kind === 'group' ? !e.group.isRisk : !isRiskNews(e.news))),
+    () =>
+      filteredFeed
+        .filter((e) => (e.kind === 'group' ? !e.group.isRisk : !isRiskNews(e.news)))
+        .sort(groupFirst),
     [filteredFeed],
   )
 
@@ -211,7 +220,7 @@ export function Reporting() {
           <FileText className="size-4" />
           <span className="text-xs font-semibold uppercase tracking-wide">Reporting</span>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">리스크 리포트 작성</h1>
+        <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">리스크 리포트 작성 · 발행</h1>
         <p className="text-sm text-muted-foreground">뉴스를 선택하고 AI 초안을 생성한 뒤, 편집하여 담당자에게 전송하세요.</p>
       </div>
 

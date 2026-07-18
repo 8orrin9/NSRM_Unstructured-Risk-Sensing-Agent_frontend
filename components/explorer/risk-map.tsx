@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
-import { MapContainer, TileLayer, Marker, Tooltip, useMap } from 'react-leaflet'
+import { useEffect, useMemo, useState } from 'react'
+import { MapContainer, TileLayer, Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import type { SupplyEntity } from '@/lib/types'
 import { SEVERITY_HEX } from '@/lib/risk-config'
@@ -10,7 +10,7 @@ function markerIcon(entity: SupplyEntity & { maxSeverity?: 'critical' | 'high' |
   // 관련 뉴스의 최고 심각도로 색상 결정
   const sev = entity.maxSeverity || 'low'
   const color = SEVERITY_HEX[sev]
-  const size = entity.type === 'site' ? 34 : 28
+  const size = entity.type === 'site' ? 16 : 13
   const pulse = (sev === 'critical' || sev === 'high') ? 'risk-marker-pulse' : ''
   const extraStyle = selected
     ? 'box-shadow:0 0 0 5px rgba(26,47,138,0.5),0 0 12px rgba(26,47,138,0.3);transform:scale(1.15);'
@@ -19,15 +19,10 @@ function markerIcon(entity: SupplyEntity & { maxSeverity?: 'critical' | 'high' |
     : !selected && !highlighted
     ? 'opacity:0.2;filter:grayscale(70%);'
     : ''
-  const newsCount = entity.activeRiskIds?.length || 0
-  // Show star for sites, or number for suppliers
-  const displayText = entity.type === 'site' ? '★' : newsCount
 
   return L.divIcon({
     className: '',
-    html: `<div class="risk-marker ${pulse}" style="width:${size}px;height:${size}px;background:${color};color:${color};font-size:11px;position:relative;${extraStyle}">
-      <span style="color:#fff;">${displayText}</span>
-    </div>`,
+    html: `<div class="risk-marker ${pulse}" style="width:${size}px;height:${size}px;background:${color};color:${color};position:relative;${extraStyle}"></div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   })
@@ -43,6 +38,17 @@ function FlyTo({ entity }: { entity: SupplyEntity | null }) {
   return null
 }
 
+// 줌 레벨 추적 — 일정 이상 줌 인 되면 거점/공급사명 상시 표시
+function ZoomWatcher({ onZoom }: { onZoom: (z: number) => void }) {
+  const map = useMapEvents({
+    zoomend: () => onZoom(map.getZoom()),
+  })
+  return null
+}
+
+// 이 줌 레벨 이상이면 이름 라벨을 상시 표시, 그 이하면 마우스 오버 시에만
+const LABEL_ZOOM_THRESHOLD = 4
+
 export default function RiskMap({
   entities,
   allNews,
@@ -56,6 +62,9 @@ export default function RiskMap({
   highlightedIds?: string[]
   onSelect: (id: string) => void
 }) {
+  const [zoom, setZoom] = useState(2)
+  const showLabels = zoom >= LABEL_ZOOM_THRESHOLD
+
   const selected = useMemo(
     () => entities.find((e) => e.id === selectedId) ?? null,
     [entities, selectedId],
@@ -111,6 +120,7 @@ export default function RiskMap({
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
       <FlyTo entity={selected} />
+      <ZoomWatcher onZoom={setZoom} />
       {entitiesWithCounts.map((e) => {
         const isSelected = e.id === selectedId
         const isHighlighted = hasHighlight ? (highlightedIds!.includes(e.id)) : true
@@ -121,12 +131,15 @@ export default function RiskMap({
             icon={markerIcon(e, isSelected, isHighlighted)}
             eventHandlers={{ click: () => onSelect(e.id) }}
           >
-            <Tooltip direction="top" offset={[0, -14]}>
-              <div style={{ fontSize: 12 }}>
-                <strong>{e.nameKo}</strong>
-                <br />
-                {e.city}, {e.country}
-              </div>
+            {/* 줌 인 시 상시 표시(permanent), 그 외에는 마우스 오버 시 표시 */}
+            <Tooltip
+              key={showLabels ? 'perm' : 'hover'}
+              permanent={showLabels}
+              direction="right"
+              offset={[6, 0]}
+              className="risk-marker-label"
+            >
+              <span style={{ fontSize: 11, fontWeight: 600 }}>{e.nameKo}</span>
             </Tooltip>
           </Marker>
         )

@@ -168,12 +168,12 @@ function PanelNewsCard({
     >
       <span className={cn('mt-1.5 size-2 shrink-0 rounded-full', c.dot)} />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex items-center gap-1.5">
           <CategoryBadge category={news.category} />
-          <SeverityBadge severity={news.severity} />
-          <span className="ml-auto text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {news.source} · {formatTime(news.publishedAt)}
           </span>
+          <SeverityBadge severity={news.severity} format="en" className="ml-auto shrink-0" />
         </div>
         <h4 className="text-pretty text-sm font-semibold leading-snug text-foreground">{news.title}</h4>
         <p className="line-clamp-1 text-xs text-muted-foreground">{news.summary}</p>

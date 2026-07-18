@@ -4,8 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { fetchNewsById, fetchEntities } from '@/lib/api-client'
 import { formatTime } from '@/lib/format'
-import { severityClasses } from '@/lib/risk-config'
-import { severityToKorean } from '@/lib/severity'
+import { severityClasses, SEVERITY_META } from '@/lib/risk-config'
 import { SeverityBadge, CategoryBadge } from '@/components/risk-badges'
 import { cn } from '@/lib/utils'
 import type { NewsItem, SupplyEntity } from '@/lib/types'
@@ -88,17 +87,19 @@ export function NewsOverlay({
         <div className={cn('flex shrink-0 items-center justify-between gap-3 border-b border-border p-4', c?.bg)}>
           <div className="flex flex-wrap items-center gap-2">
             {displayNews && <CategoryBadge category={displayNews.category} />}
-            {displayNews && <SeverityBadge severity={displayNews.severity} />}
             <span className="text-xs text-muted-foreground">
               {displayNews?.source} · {displayNews ? formatTime(displayNews.publishedAt) : ''}
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {displayNews && <SeverityBadge severity={displayNews.severity} format="en" />}
+            <button
+              onClick={onClose}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
         </div>
 
         {/* Body */}
@@ -206,55 +207,68 @@ export function NewsOverlay({
                 </div>
               )}
 
-              {/* Severity score with hover tooltip and 4-level gauge */}
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3">
-                <span className="text-xs text-muted-foreground">AI 리스크 평가</span>
-                <div className="flex flex-1 items-center gap-3">
-                  <div
-                    className={cn('group relative rounded-full border px-3 py-1 text-sm font-bold', c?.border, c?.bg)}
-                    title={`정확한 점수: ${displayNews.impactScore}`}
-                  >
-                    <span className={cn('cursor-help', c?.text)}>{severityToKorean(displayNews.severity)}</span>
-                    <span className={cn('absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100', 'pointer-events-none')}>
-                      {displayNews.impactScore} / 100
-                    </span>
-                  </div>
-                  {/* 4등분 게이지 바 */}
-                  <div className="flex flex-1 gap-0.5">
-                    {[0, 25, 50, 75].map((threshold) => {
-                      const isActive = displayNews.impactScore > threshold
-                      let bgClass = 'bg-muted'
-                      if (isActive) {
-                        if (displayNews.severity === 'critical') bgClass = 'bg-risk-critical'
-                        else if (displayNews.severity === 'high') bgClass = 'bg-risk-high'
-                        else if (displayNews.severity === 'medium') bgClass = 'bg-risk-medium'
-                        else bgClass = 'bg-risk-low'
-                      }
-                      return (
-                        <div
-                          key={threshold}
-                          className={cn('h-2 flex-1 rounded-sm transition-all', bgClass)}
-                        />
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* AI 판단 근거 */}
-              {displayNews.riskJustification && (
+              {/* ══ AI RISK CORE INSIGHTS ══ */}
+              <div className="flex flex-col gap-4 border-t border-border pt-5">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">AI 판단 근거</span>
-                  <ul className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
-                    {displayNews.riskJustification.split(/\n+|(?<=[.!?。])\s+/).filter((s) => s.trim()).map((line, i) => (
-                      <li key={i} className="flex gap-2 text-sm leading-relaxed text-foreground">
-                        <span className="mt-1.5 size-1 shrink-0 rounded-full bg-muted-foreground" />
-                        <span>{line.trim()}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex w-fit items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1">
+                    <span className="size-1.5 rounded-full bg-primary" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">AI Risk Core Insights</span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    뉴스 자체의 리스크 여부, DS 반도체 공급망 DB와의 관련성, 시급성 기반으로 AI가 분석한 인사이트
+                  </p>
                 </div>
-              )}
+
+                {/* AI 리스크 평가 — 4단계 게이지 (박스 없이) */}
+                <div className="flex flex-col gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">AI 리스크 평가</span>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={cn('group relative rounded-full border px-3 py-1 text-sm font-bold', c?.border, c?.bg)}
+                      title={`정확한 점수: ${displayNews.impactScore}`}
+                    >
+                      <span className={cn('cursor-help', c?.text)}>{SEVERITY_META[displayNews.severity].en}</span>
+                      <span className={cn('absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100', 'pointer-events-none')}>
+                        {displayNews.impactScore} / 100
+                      </span>
+                    </div>
+                    {/* 4등분 게이지 바 */}
+                    <div className="flex flex-1 gap-0.5">
+                      {[0, 25, 50, 75].map((threshold) => {
+                        const isActive = displayNews.impactScore > threshold
+                        let bgClass = 'bg-muted'
+                        if (isActive) {
+                          if (displayNews.severity === 'critical') bgClass = 'bg-risk-critical'
+                          else if (displayNews.severity === 'high') bgClass = 'bg-risk-high'
+                          else if (displayNews.severity === 'medium') bgClass = 'bg-risk-medium'
+                          else bgClass = 'bg-risk-low'
+                        }
+                        return (
+                          <div
+                            key={threshold}
+                            className={cn('h-2 flex-1 rounded-sm transition-all', bgClass)}
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI 판단 근거 */}
+                {displayNews.riskJustification && (
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">AI 판단 근거</span>
+                    <ul className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
+                      {displayNews.riskJustification.split(/\n+|(?<=[.!?。])\s+/).filter((s) => s.trim()).map((line, i) => (
+                        <li key={i} className="flex gap-2 text-sm leading-relaxed text-foreground">
+                          <span className="mt-1.5 size-1 shrink-0 rounded-full bg-muted-foreground" />
+                          <span>{line.trim()}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

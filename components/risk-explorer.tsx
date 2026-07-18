@@ -23,6 +23,9 @@ import {
   Layers,
   ChevronDown,
   Eye,
+  ArrowRight,
+  CalendarDays,
+  X,
 } from 'lucide-react'
 
 const RiskMap = dynamic(() => import('@/components/explorer/risk-map'), {
@@ -35,6 +38,10 @@ const RiskMap = dynamic(() => import('@/components/explorer/risk-map'), {
 })
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
+
+function isoDate(iso: string) {
+  return iso.slice(0, 10)
+}
 
 const TYPE_META: Record<EntityType, { ko: string; icon: typeof Building2 }> = {
   supplier: { ko: '공급사', icon: Building2 },
@@ -61,14 +68,14 @@ export function RiskExplorer() {
   // News list state
   const [newsQuery, setNewsQuery] = useState('')
   const [newsSevFilter, setNewsSevFilter] = useState<Severity | 'all'>('all')
-  const [dateFilter, setDateFilter] = useState<'7days' | '30days' | 'all'>('7days')
+  const [newsDateFrom, setNewsDateFrom] = useState('')
+  const [newsDateTo, setNewsDateTo] = useState('')
   const [openEntryId, setOpenEntryId] = useState<string | null>(null)
   const [showMoreGroups, setShowMoreGroups] = useState(false)
   const [showMoreNews, setShowMoreNews] = useState(false)
 
   // Entity list state
   const [entityQuery, setEntityQuery] = useState('')
-  const [typeFilter, setTypeFilter] = useState<EntityType | 'all'>('all')
 
   // News overlay state
   const [overlayNews, setOverlayNews] = useState<NewsItem | null>(null)
@@ -148,17 +155,9 @@ export function RiskExplorer() {
   // Filtered groups and news with date filter
   const filteredGroups = useMemo(() => {
     return groups.filter((group) => {
-      // Date filter
-      if (dateFilter !== 'all') {
-        const now = new Date()
-        const cutoff = new Date()
-        if (dateFilter === '7days') {
-          cutoff.setDate(now.getDate() - 7)
-        } else if (dateFilter === '30days') {
-          cutoff.setDate(now.getDate() - 30)
-        }
-        if (new Date(group.latestAt) < cutoff) return false
-      }
+      // Date range filter (그룹은 최신 활동 시각 기준)
+      if (newsDateFrom && isoDate(group.latestAt) < newsDateFrom) return false
+      if (newsDateTo && isoDate(group.latestAt) > newsDateTo) return false
 
       if (newsSevFilter !== 'all' && group.severity !== newsSevFilter) return false
       if (!newsQuery) return true
@@ -168,21 +167,13 @@ export function RiskExplorer() {
         group.rationale.toLowerCase().includes(q)
       )
     })
-  }, [groups, newsQuery, newsSevFilter, dateFilter])
+  }, [groups, newsQuery, newsSevFilter, newsDateFrom, newsDateTo])
 
   const filteredNews = useMemo(() => {
     return ungroupedNews.filter((n) => {
-      // Date filter
-      if (dateFilter !== 'all') {
-        const now = new Date()
-        const cutoff = new Date()
-        if (dateFilter === '7days') {
-          cutoff.setDate(now.getDate() - 7)
-        } else if (dateFilter === '30days') {
-          cutoff.setDate(now.getDate() - 30)
-        }
-        if (new Date(n.publishedAt) < cutoff) return false
-      }
+      // Date range filter
+      if (newsDateFrom && isoDate(n.publishedAt) < newsDateFrom) return false
+      if (newsDateTo && isoDate(n.publishedAt) > newsDateTo) return false
 
       if (newsSevFilter !== 'all' && n.severity !== newsSevFilter) return false
       if (!newsQuery) return true
@@ -192,8 +183,8 @@ export function RiskExplorer() {
         n.summary.toLowerCase().includes(q) ||
         n.keywords.some((k) => k.toLowerCase().includes(q))
       )
-    }).sort((a, b) => b.impactScore - a.impactScore)
-  }, [ungroupedNews, newsQuery, newsSevFilter, dateFilter])
+    }).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+  }, [ungroupedNews, newsQuery, newsSevFilter, newsDateFrom, newsDateTo])
 
   // 관련 뉴스가 있는 entities만 필터링 (심각도 무관)
   const relevantEntities = useMemo(() => {
@@ -220,25 +211,16 @@ export function RiskExplorer() {
     })
   }, [relevantEntities, relevantNews])
 
-  // Filtered entities (검색·타입 필터 적용)
+  // Filtered entities (검색만 적용)
   const filteredEntities = useMemo(() => {
     return entitiesWithSeverity.filter(
       (e) =>
-        (typeFilter === 'all' || e.type === typeFilter) &&
-        (entityQuery === '' ||
-          e.nameKo.includes(entityQuery) ||
-          e.name.toLowerCase().includes(entityQuery.toLowerCase()) ||
-          e.country.toLowerCase().includes(entityQuery.toLowerCase())),
+        entityQuery === '' ||
+        e.nameKo.includes(entityQuery) ||
+        e.name.toLowerCase().includes(entityQuery.toLowerCase()) ||
+        e.country.toLowerCase().includes(entityQuery.toLowerCase()),
     )
-  }, [entitiesWithSeverity, entityQuery, typeFilter])
-
-  const stats = useMemo(() => {
-    // 최고 심각도로 상태 집계 (critical/high = 위험)
-    const disrupted = entitiesWithSeverity.filter((e) => e.maxSeverity === 'critical').length
-    const watch = entitiesWithSeverity.filter((e) => e.maxSeverity === 'high').length
-    const countries = new Set(relevantEntities.map((e) => e.country)).size
-    return { disrupted, watch, countries, total: relevantEntities.length }
-  }, [entitiesWithSeverity, relevantEntities])
+  }, [entitiesWithSeverity, entityQuery])
 
   function selectNews(id: string) {
     // Toggle selection and highlight related entities on map
@@ -271,16 +253,8 @@ export function RiskExplorer() {
         </p>
       </div>
 
-      {/* Stat strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="등록 거점" value={stats.total} unit="곳" />
-        <StatCard label="공급 차질" value={stats.disrupted} unit="곳" tone="critical" />
-        <StatCard label="주의 관찰" value={stats.watch} unit="곳" tone="high" />
-        <StatCard label="대상 국가" value={stats.countries} unit="개국" />
-      </div>
-
       {/* Main: left panel + right map */}
-      <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[440px_1fr]">
         {/* ── Left panel ── */}
         <div className="flex h-[600px] flex-col overflow-hidden rounded-xl border border-border bg-card">
           {/* Mode tabs */}
@@ -324,37 +298,39 @@ export function RiskExplorer() {
                     className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-3 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {(['all', 'critical', 'high', 'medium', 'low'] as const).map((s) => (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <select
+                    value={newsSevFilter}
+                    onChange={(e) => setNewsSevFilter(e.target.value as Severity | 'all')}
+                    className="shrink-0 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-primary"
+                  >
+                    <option value="all">전체</option>
+                    {SEVERITIES.map((s) => (
+                      <option key={s} value={s}>{SEVERITY_META[s].en}</option>
+                    ))}
+                  </select>
+                  <CalendarDays className="size-3.5 shrink-0" />
+                  <input
+                    type="date"
+                    value={newsDateFrom}
+                    onChange={(e) => setNewsDateFrom(e.target.value)}
+                    className="min-w-0 flex-1 rounded border border-border bg-background px-1.5 py-1 text-xs text-foreground outline-none focus:border-primary"
+                  />
+                  <span className="shrink-0">~</span>
+                  <input
+                    type="date"
+                    value={newsDateTo}
+                    onChange={(e) => setNewsDateTo(e.target.value)}
+                    className="min-w-0 flex-1 rounded border border-border bg-background px-1.5 py-1 text-xs text-foreground outline-none focus:border-primary"
+                  />
+                  {(newsDateFrom || newsDateTo) && (
                     <button
-                      key={s}
-                      onClick={() => setNewsSevFilter(s === newsSevFilter ? 'all' : s)}
-                      className={cn(
-                        'rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors',
-                        newsSevFilter === s
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border bg-card text-muted-foreground hover:bg-muted',
-                      )}
+                      onClick={() => { setNewsDateFrom(''); setNewsDateTo('') }}
+                      className="shrink-0 text-muted-foreground hover:text-foreground"
                     >
-                      {s === 'all' ? '전체' : SEVERITY_META[s].ko}
+                      <X className="size-3.5" />
                     </button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {(['7days', '30days', 'all'] as const).map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDateFilter(d)}
-                      className={cn(
-                        'rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors',
-                        dateFilter === d
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border bg-card text-muted-foreground hover:bg-muted',
-                      )}
-                    >
-                      {d === '7days' ? '7일' : d === '30days' ? '30일' : '전체'}
-                    </button>
-                  ))}
+                  )}
                 </div>
                 {selectedNewsId && (
                   <div className="flex items-center gap-2 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs text-primary">
@@ -432,27 +408,11 @@ export function RiskExplorer() {
                     className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-3 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {(['all', 'supplier', 'material', 'site'] as const).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTypeFilter(t)}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-                        typeFilter === t
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border bg-card text-muted-foreground hover:bg-muted',
-                      )}
-                    >
-                      {t === 'all' ? '전체' : TYPE_META[t].ko}
-                    </button>
-                  ))}
-                </div>
               </div>
               <div className="flex-1 overflow-y-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
-                    <tr className="text-left text-xs text-muted-foreground">
+                    <tr className="text-left text-[10px] text-muted-foreground">
                       <th className="px-3 py-2 font-medium">거점 / 공급사</th>
                       <th className="px-3 py-2 font-medium">상태</th>
                       <th className="px-3 py-2 text-right font-medium">관련 뉴스</th>
@@ -475,23 +435,23 @@ export function RiskExplorer() {
                             active && 'bg-accent',
                           )}
                         >
-                          <td className="px-3 py-2.5">
+                          <td className="px-3 py-2">
                             <div className="flex items-center gap-2">
-                              <span className="grid size-7 shrink-0 place-items-center rounded-md bg-secondary text-secondary-foreground">
-                                <TypeIcon className="size-3.5" />
+                              <span className="grid size-6 shrink-0 place-items-center rounded-md bg-secondary text-secondary-foreground">
+                                <TypeIcon className="size-3" />
                               </span>
                               <div className="flex flex-col">
-                                <span className="font-medium text-foreground">{e.nameKo}</span>
-                                <span className="text-xs text-muted-foreground">{e.country} · Tier {e.tier}</span>
+                                <span className="text-xs font-medium text-foreground">{e.nameKo}</span>
+                                <span className="text-[10px] text-muted-foreground">{e.country}</span>
                               </div>
                             </div>
                           </td>
-                          <td className="px-3 py-2.5">
+                          <td className="px-3 py-2">
                             {/* 상태 = 관련 뉴스 최고 심각도 (지도 마커 색과 동일 기준) */}
-                            <SeverityBadge severity={e.maxSeverity} />
+                            <SeverityBadge severity={e.maxSeverity} format="en" />
                           </td>
-                          <td className="px-3 py-2.5 text-right">
-                            <span className="font-semibold tabular-nums text-foreground">{e.newsCount}건</span>
+                          <td className="px-3 py-2 text-right">
+                            <span className="text-xs font-semibold tabular-nums text-foreground">{e.newsCount}건</span>
                           </td>
                         </tr>
                       )
@@ -522,7 +482,7 @@ export function RiskExplorer() {
           />
           {/* Legend — 관련 뉴스 최고 심각도 기준 (지도 원 색 = 좌측 상태 색) */}
           <div className="pointer-events-none absolute bottom-3 left-3 z-[400] flex flex-col gap-1.5 rounded-lg border border-border bg-card/95 p-2.5 text-xs shadow-sm backdrop-blur">
-            <span className="font-semibold text-foreground">심각도</span>
+            <span className="font-semibold text-foreground">AI 리스크 평가도</span>
             {SEVERITIES.map((s) => (
               <span key={s} className={cn('flex items-center gap-1.5 text-muted-foreground')}>
                 <span className="size-2 rounded-full" style={{ background: SEVERITY_HEX[s] }} />
@@ -592,10 +552,10 @@ function ExplorerNewsItem({
       >
         <span className={cn('mt-1.5 size-2 shrink-0 rounded-full', c.dot)} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5">
             <CategoryBadge category={news.category} />
-            <SeverityBadge severity={news.severity} />
-            <span className="ml-auto text-[10px] text-muted-foreground">{formatTime(news.publishedAt)}</span>
+            <span className="text-[10px] text-muted-foreground">{formatTime(news.publishedAt)}</span>
+            <SeverityBadge severity={news.severity} format="en" className="ml-auto shrink-0" />
           </div>
           <h4 className="text-pretty text-xs font-semibold leading-snug text-foreground">{news.title}</h4>
           {news.relatedEntityIds.length > 0 && (
@@ -603,13 +563,13 @@ function ExplorerNewsItem({
               관련 거점 {news.relatedEntityIds.length}개
             </span>
           )}
-          {/* Detail overlay button — 우측 하단 정렬 */}
+          {/* Detail overlay button — 우측 하단 화살표 */}
           <button
             onClick={(e) => { e.stopPropagation(); onOpenOverlay() }}
-            className="mt-1 ml-auto inline-flex w-fit items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            className="mt-1 ml-auto grid size-6 place-items-center rounded-md text-muted-foreground transition-colors hover:text-primary"
+            title="자세히 보기"
           >
-            <Eye className="size-3" />
-            자세히 보기
+            <ArrowRight className="size-3.5" />
           </button>
         </div>
       </div>
@@ -650,7 +610,7 @@ function ExplorerGroupItem({
               그룹 {group.items.length}건
             </span>
             <CategoryBadge category={group.category} />
-            <SeverityBadge severity={group.severity} />
+            <SeverityBadge severity={group.severity} format="en" />
           </span>
           <span className="text-xs font-semibold leading-snug text-foreground">{group.title}</span>
         </button>
@@ -689,26 +649,3 @@ function ExplorerGroupItem({
   )
 }
 
-// ─── StatCard ─────────────────────────────────────────────────────────────────
-
-function StatCard({ label, value, unit, tone = 'default' }: {
-  label: string
-  value: number
-  unit: string
-  tone?: 'default' | 'critical' | 'high'
-}) {
-  return (
-    <div className="flex flex-col gap-1 rounded-xl border border-border bg-card p-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn(
-        'text-2xl font-bold tabular-nums leading-none',
-        tone === 'critical' && 'text-risk-critical',
-        tone === 'high' && 'text-risk-high',
-        tone === 'default' && 'text-foreground',
-      )}>
-        {value}
-        <span className="ml-1 text-xs font-medium text-muted-foreground">{unit}</span>
-      </span>
-    </div>
-  )
-}

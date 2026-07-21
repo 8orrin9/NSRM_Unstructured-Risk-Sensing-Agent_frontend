@@ -6,6 +6,7 @@ import type {
   NewsItem, NewsGroup, SupplyEntity, AdminGroup,
   OpKeyword, OpTag, RecommendedKeyword, RecommendedTag,
   TagSupplyChain,
+  RawMaterialRow, MaterialRow, SiteRow, SupplierRow,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8007/api'
@@ -156,6 +157,33 @@ export async function deleteTags(ids: number[]): Promise<void> {
 export async function fetchTagRecommendations(): Promise<RecommendedTag[]> {
   const res = await fetch(`${API_BASE_URL}/admin/tags/recommendations`)
   if (!res.ok) throw new Error(`Failed to fetch tag recommendations: ${res.statusText}`)
+  return res.json()
+}
+
+/**
+ * 관리자: 공급망 Database 마스터 조회 (supply_chain.db, 조회 전용)
+ */
+export async function fetchRawMaterials(): Promise<RawMaterialRow[]> {
+  const res = await fetch(`${API_BASE_URL}/admin/supply-chain/raw-materials`)
+  if (!res.ok) throw new Error(`Failed to fetch raw materials: ${res.statusText}`)
+  return res.json()
+}
+
+export async function fetchMaterials(): Promise<MaterialRow[]> {
+  const res = await fetch(`${API_BASE_URL}/admin/supply-chain/materials`)
+  if (!res.ok) throw new Error(`Failed to fetch materials: ${res.statusText}`)
+  return res.json()
+}
+
+export async function fetchSites(): Promise<SiteRow[]> {
+  const res = await fetch(`${API_BASE_URL}/admin/supply-chain/sites`)
+  if (!res.ok) throw new Error(`Failed to fetch sites: ${res.statusText}`)
+  return res.json()
+}
+
+export async function fetchSuppliers(): Promise<SupplierRow[]> {
+  const res = await fetch(`${API_BASE_URL}/admin/supply-chain/suppliers`)
+  if (!res.ok) throw new Error(`Failed to fetch suppliers: ${res.statusText}`)
   return res.json()
 }
 

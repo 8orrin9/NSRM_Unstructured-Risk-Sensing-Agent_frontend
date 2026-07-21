@@ -7,6 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+const EMPTY_SELECTION: Set<number> = new Set()
+
 export interface Column<T> {
   key: string
   label: string
@@ -24,24 +26,28 @@ interface AdminDataTableProps<T> {
   getRowId: (row: T) => number
   /** 검색 대상 텍스트 (전 컬럼 결합) */
   getSearchText: (row: T) => string
-  selected: Set<number>
-  onSelectedChange: (next: Set<number>) => void
+  /** 행 다중선택(체크박스) 사용 여부. 기본 true. false면 조회 전용(체크박스 열 숨김) */
+  selectable?: boolean
+  selected?: Set<number>
+  onSelectedChange?: (next: Set<number>) => void
 }
 
 /**
  * 관리자 키워드/태그 공용 표.
  * - 상단 검색(전 컬럼 텍스트) + filterable 컬럼별 값 드롭다운
  * - thead sticky (열 이름 고정) + 세로 스크롤
- * - 행별 체크박스 다중선택
+ * - 행별 체크박스 다중선택 (selectable=false면 조회 전용)
  */
 export function AdminDataTable<T>({
   rows,
   columns,
   getRowId,
   getSearchText,
+  selectable = true,
   selected,
   onSelectedChange,
 }: AdminDataTableProps<T>) {
+  const selectedSet = selected ?? EMPTY_SELECTION
   const [search, setSearch] = useState('')
   const [colFilters, setColFilters] = useState<Record<string, string>>({})
 
@@ -72,19 +78,19 @@ export function AdminDataTable<T>({
     })
   }, [rows, search, colFilters, getSearchText])
 
-  const allChecked = filtered.length > 0 && filtered.every((r) => selected.has(getRowId(r)))
+  const allChecked = filtered.length > 0 && filtered.every((r) => selectedSet.has(getRowId(r)))
 
   function toggleRow(id: number) {
-    const next = new Set(selected)
+    const next = new Set(selectedSet)
     next.has(id) ? next.delete(id) : next.add(id)
-    onSelectedChange(next)
+    onSelectedChange?.(next)
   }
 
   function toggleAll() {
-    const next = new Set(selected)
+    const next = new Set(selectedSet)
     if (allChecked) filtered.forEach((r) => next.delete(getRowId(r)))
     else filtered.forEach((r) => next.add(getRowId(r)))
-    onSelectedChange(next)
+    onSelectedChange?.(next)
   }
 
   return (
@@ -129,9 +135,11 @@ export function AdminDataTable<T>({
         <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-muted">
             <tr>
-              <th className="w-10 px-3 py-2 text-left">
-                <Checkbox checked={allChecked} onCheckedChange={toggleAll} aria-label="전체 선택" />
-              </th>
+              {selectable && (
+                <th className="w-10 px-3 py-2 text-left">
+                  <Checkbox checked={allChecked} onCheckedChange={toggleAll} aria-label="전체 선택" />
+                </th>
+              )}
               {columns.map((c) => (
                 <th
                   key={c.key}
@@ -148,22 +156,24 @@ export function AdminDataTable<T>({
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={columns.length + (selectable ? 1 : 0)} className="px-3 py-8 text-center text-muted-foreground">
                   표시할 항목이 없습니다.
                 </td>
               </tr>
             ) : (
               filtered.map((row) => {
                 const id = getRowId(row)
-                const checked = selected.has(id)
+                const checked = selectedSet.has(id)
                 return (
                   <tr
                     key={id}
                     className={cn('border-t border-border transition-colors hover:bg-muted/50', checked && 'bg-primary/5')}
                   >
-                    <td className="px-3 py-2 align-top">
-                      <Checkbox checked={checked} onCheckedChange={() => toggleRow(id)} aria-label="행 선택" />
-                    </td>
+                    {selectable && (
+                      <td className="px-3 py-2 align-top">
+                        <Checkbox checked={checked} onCheckedChange={() => toggleRow(id)} aria-label="행 선택" />
+                      </td>
+                    )}
                     {columns.map((c) => (
                       <td key={c.key} className={cn('px-3 py-2 align-top', c.className)}>
                         {c.render

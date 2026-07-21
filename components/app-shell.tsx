@@ -4,17 +4,26 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Newspaper, Globe2, FileText, Settings, ChevronDown } from 'lucide-react'
+import {
+  Newspaper, Globe2, FileText, Settings, ChevronDown,
+  Sparkles, KeyRound, Tag, Boxes, Package, MapPin, Factory,
+} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+
+type MenuLink = { href: string; label: string; desc: string; icon: typeof Newspaper }
+type MenuSection = { label: string; items: MenuLink[]; cols?: 1 | 2 }
 
 type NavItem =
   | { href: string; label: string; icon: typeof Newspaper }
-  | { label: string; icon: typeof Newspaper; submenu: { href: string; label: string }[] }
+  | { label: string; icon: typeof Newspaper; sections: MenuSection[] }
 
 const NAV: NavItem[] = [
   { href: '/', label: 'Daily News', icon: Newspaper },
@@ -23,10 +32,25 @@ const NAV: NavItem[] = [
   {
     label: '관리자',
     icon: Settings,
-    submenu: [
-      { href: '/admin/insights', label: 'AI 핵심 인사이트' },
-      { href: '/admin/keywords', label: '뉴스 수집 키워드' },
-      { href: '/admin/tags', label: '태그 관리' },
+    sections: [
+      {
+        label: '관리 도구',
+        items: [
+          { href: '/admin/insights', label: 'AI 핵심 인사이트', desc: '그룹 노출 관리', icon: Sparkles },
+          { href: '/admin/keywords', label: '뉴스 수집 키워드', desc: '수집 키워드 조회·편집', icon: KeyRound },
+          { href: '/admin/tags', label: '태그 관리', desc: '리스크 태그 관리', icon: Tag },
+        ],
+      },
+      {
+        label: '공급망 Database',
+        cols: 2,
+        items: [
+          { href: '/admin/supply-chain?tab=raw-materials', label: '원자재', desc: 'RAW_MATERIAL_MASTER', icon: Boxes },
+          { href: '/admin/supply-chain?tab=materials', label: '자재', desc: 'MATERIAL_MASTER', icon: Package },
+          { href: '/admin/supply-chain?tab=sites', label: '거점', desc: 'SITE_MASTER', icon: MapPin },
+          { href: '/admin/supply-chain?tab=suppliers', label: '협력사', desc: 'SUPPLIER_MASTER', icon: Factory },
+        ],
+      },
     ],
   },
 ]
@@ -59,9 +83,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     : 'text-muted-foreground hover:text-foreground',
                 )
 
-              // 하위 메뉴가 있는 항목 → 드롭다운
-              if ('submenu' in item) {
-                const active = item.submenu.some((s) => pathname.startsWith(s.href))
+              // 하위 메뉴가 있는 항목 → 섹션형 메가패널 드롭다운
+              if ('sections' in item) {
+                const allItems = item.sections.flatMap((s) => s.items)
+                const active = allItems.some((s) => pathname.startsWith(s.href.split('?')[0]))
                 return (
                   <DropdownMenu key={item.label}>
                     <DropdownMenuTrigger className={pillClass(active)}>
@@ -69,15 +94,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <span className="hidden sm:block">{item.label}</span>
                       <ChevronDown className="size-3" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="min-w-44">
-                      {item.submenu.map((sub) => (
-                        <DropdownMenuItem
-                          key={sub.href}
-                          render={<Link href={sub.href} />}
-                          className={cn(pathname.startsWith(sub.href) && 'bg-accent text-accent-foreground')}
-                        >
-                          {sub.label}
-                        </DropdownMenuItem>
+                    <DropdownMenuContent
+                      align="start"
+                      sideOffset={8}
+                      className="w-[min(92vw,560px)] rounded-2xl p-2 shadow-xl"
+                    >
+                      {item.sections.map((section, si) => (
+                        <div key={section.label}>
+                          {si > 0 && <DropdownMenuSeparator className="my-1.5" />}
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel className="px-2 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                              {section.label}
+                            </DropdownMenuLabel>
+                            <div className={cn('grid gap-0.5', section.cols === 2 && 'grid-cols-2')}>
+                              {section.items.map((sub) => {
+                                const SubIcon = sub.icon
+                                const subActive = pathname.startsWith(sub.href.split('?')[0])
+                                return (
+                                  <DropdownMenuItem
+                                    key={sub.href}
+                                    render={<Link href={sub.href} />}
+                                    className={cn(
+                                      'items-start gap-3 rounded-xl px-2.5 py-2',
+                                      subActive && 'bg-accent text-accent-foreground',
+                                    )}
+                                  >
+                                    <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-foreground/70">
+                                      <SubIcon className="size-4" />
+                                    </span>
+                                    <span className="flex flex-col gap-0.5 overflow-hidden">
+                                      <span className="text-sm font-bold text-foreground">{sub.label}</span>
+                                      <span className="truncate text-xs text-muted-foreground">{sub.desc}</span>
+                                    </span>
+                                  </DropdownMenuItem>
+                                )
+                              })}
+                            </div>
+                          </DropdownMenuGroup>
+                        </div>
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>

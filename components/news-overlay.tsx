@@ -13,7 +13,6 @@ import {
   ExternalLink,
   ArrowRight,
   Building2,
-  Plus,
   Loader2,
   Factory,
   Package,
@@ -27,11 +26,9 @@ import {
 export function NewsOverlay({
   news,
   onClose,
-  onAddKeyword,
 }: {
   news: NewsItem | null
   onClose: () => void
-  onAddKeyword?: (kw: string) => void
 }) {
   const [fullTextExpanded, setFullTextExpanded] = useState(false)
   const [fullNews, setFullNews] = useState<NewsItem | null>(null)
@@ -180,28 +177,11 @@ export function NewsOverlay({
               <div className="flex flex-col gap-2">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   키워드
-                  {onAddKeyword && (
-                    <span className="ml-2 font-normal normal-case text-primary">(+ 클릭하여 수집 키워드 Pool에 추가)</span>
-                  )}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {displayNews.keywords.map((k) => {
                     const isRecommended = displayNews.recommendedKeywords?.includes(k)
-                    return onAddKeyword ? (
-                      <button
-                        key={k}
-                        onClick={() => onAddKeyword(k)}
-                        className={cn(
-                          'group inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs transition-colors',
-                          isRecommended
-                            ? 'border-amber-300 bg-amber-100/50 text-amber-900 hover:border-amber-400 hover:bg-amber-200/50'
-                            : 'border-border bg-secondary text-secondary-foreground hover:border-primary hover:bg-primary/5 hover:text-primary'
-                        )}
-                      >
-                        #{k}
-                        <Plus className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
-                      </button>
-                    ) : (
+                    return (
                       <span
                         key={k}
                         className={cn(

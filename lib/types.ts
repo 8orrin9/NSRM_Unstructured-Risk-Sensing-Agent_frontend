@@ -114,6 +114,45 @@ export interface RecommendedTag {
   keywords_full: string | null
 }
 
+// 공급망 Database 마스터 조회 (supply_chain.db, 조회 전용) — 백엔드 모델과 1:1
+export interface RawMaterialRow {
+  no: number
+  raw_material_code: string
+  name_kor: string
+  name_eng: string
+  raw_material_type: string | null
+}
+
+export interface MaterialRow {
+  no: number
+  material_code: string
+  name_kor: string
+  name_eng: string
+  material_type: string | null
+}
+
+export interface SiteRow {
+  no: number
+  site_code: string
+  supplier_code: string
+  name: string
+  country: string | null
+  region: string | null
+  latitude: number | null
+  longitude: number | null
+}
+
+export interface SupplierRow {
+  no: number
+  supplier_code: string
+  name_kor: string
+  name_eng: string
+  country: string | null
+  region: string | null
+  latitude: number | null
+  longitude: number | null
+}
+
 // A derived, denormalized group with computed meta + resolved member items
 export interface ResolvedGroup {
   id: string

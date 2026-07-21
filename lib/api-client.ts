@@ -5,6 +5,7 @@
 import type {
   NewsItem, NewsGroup, SupplyEntity, AdminGroup,
   OpKeyword, OpTag, RecommendedKeyword, RecommendedTag,
+  TagSupplyChain,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8007/api'
@@ -207,6 +208,19 @@ export async function fetchEntityNews(entityId: string): Promise<NewsItem[]> {
 
   if (!res.ok) {
     throw new Error(`Failed to fetch entity news: ${res.statusText}`)
+  }
+
+  return res.json()
+}
+
+/**
+ * 특정 태그와 관련된 공급망 정보 조회 (자재/원재료/협력사/거점)
+ */
+export async function fetchTagSupplyChain(tagId: string): Promise<TagSupplyChain> {
+  const res = await fetch(`${API_BASE_URL}/tags/${encodeURIComponent(tagId)}/supply-chain`)
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch tag supply chain: ${res.statusText}`)
   }
 
   return res.json()

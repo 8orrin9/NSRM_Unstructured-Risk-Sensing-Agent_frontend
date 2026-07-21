@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { fetchNewsById, fetchEntities } from '@/lib/api-client'
+import { fetchNewsById, fetchEntities, fetchTagSupplyChain } from '@/lib/api-client'
 import { formatTime } from '@/lib/format'
 import { severityClasses, SEVERITY_META } from '@/lib/risk-config'
 import { SeverityBadge, CategoryBadge } from '@/components/risk-badges'
 import { cn } from '@/lib/utils'
-import type { NewsItem, SupplyEntity } from '@/lib/types'
+import type { NewsItem, SupplyEntity, TagSupplyChain, SupplyRef } from '@/lib/types'
 import {
   X,
   ExternalLink,
@@ -15,6 +15,9 @@ import {
   Building2,
   Plus,
   Loader2,
+  Factory,
+  Package,
+  Layers,
 } from 'lucide-react'
 
 /**
@@ -35,6 +38,11 @@ export function NewsOverlay({
   const [loading, setLoading] = useState(false)
   const [allEntities, setAllEntities] = useState<SupplyEntity[]>([])
 
+  // 태그 클릭 → 공급망 정보 (인라인 확장)
+  const [openTagId, setOpenTagId] = useState<string | null>(null)
+  const [tagChain, setTagChain] = useState<TagSupplyChain | null>(null)
+  const [tagLoading, setTagLoading] = useState(false)
+
   // 관련 거점 이름 표시용 엔티티 목록 로드 (1회)
   useEffect(() => {
     fetchEntities().then(setAllEntities).catch(console.error)
@@ -42,6 +50,9 @@ export function NewsOverlay({
 
   // 뉴스가 열리면 detail이 없는 경우 개별 API 호출
   useEffect(() => {
+    // 다른 뉴스로 전환되면 태그 확장 상태 초기화
+    setOpenTagId(null)
+    setTagChain(null)
     if (news && !news.detail) {
       setLoading(true)
       fetchNewsById(news.id)
@@ -52,6 +63,22 @@ export function NewsOverlay({
       setFullNews(news)
     }
   }, [news])
+
+  // 태그 클릭 토글 (같은 태그 재클릭 시 닫힘)
+  const handleTagClick = (tagId: string) => {
+    if (openTagId === tagId) {
+      setOpenTagId(null)
+      setTagChain(null)
+      return
+    }
+    setOpenTagId(tagId)
+    setTagChain(null)
+    setTagLoading(true)
+    fetchTagSupplyChain(tagId)
+      .then(setTagChain)
+      .catch(console.error)
+      .finally(() => setTagLoading(false))
+  }
 
   const displayNews = fullNews || news
   const c = displayNews ? severityClasses(displayNews.severity) : null
@@ -191,26 +218,76 @@ export function NewsOverlay({
                 </div>
               </div>
 
-              {displayNews.tags && displayNews.tags.length > 0 && (
+              {displayNews.tagRefs && displayNews.tagRefs.length > 0 ? (
                 <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">유관 태그</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    유관 태그
+                    <span className="ml-2 font-normal normal-case text-primary">(클릭하여 관련 공급망 정보 보기)</span>
+                  </span>
                   <div className="flex flex-wrap gap-1.5">
-                    {/* 태그 추천 기능 비활성화 (추후 재활성화 시: recommendedTags 병합 + isRecommendedTag 앰버 하이라이팅 복원)
-                    {Array.from(new Set([...(displayNews.tags ?? []), ...(displayNews.recommendedTags ?? [])])).map((tag) => {
-                      const isRecommendedTag = displayNews.recommendedTags?.includes(tag)
-                      ...앰버 하이라이팅...
-                    })}
-                    */}
-                    {displayNews.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1 rounded border border-border bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                    {displayNews.tagRefs.map((t) =>
+                      t.linkable ? (
+                        <button
+                          key={t.tagId}
+                          onClick={() => handleTagClick(t.tagId)}
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs font-medium transition-colors',
+                            openTagId === t.tagId
+                              ? 'border-primary bg-primary/20 text-primary'
+                              : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/20',
+                          )}
+                        >
+                          {t.tagName}
+                        </button>
+                      ) : (
+                        <span
+                          key={t.tagId}
+                          className="inline-flex items-center gap-1 rounded border border-border bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
+                        >
+                          {t.tagName}
+                        </span>
+                      ),
+                    )}
                   </div>
+                  {openTagId && (
+                    <div className="mt-1 rounded-lg border border-border bg-muted/40 p-3">
+                      {tagLoading ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="size-3.5 animate-spin" /> 공급망 정보 조회 중...
+                        </div>
+                      ) : tagChain &&
+                        (tagChain.suppliers.length > 0 ||
+                          tagChain.sites.length > 0 ||
+                          tagChain.materials.length > 0 ||
+                          tagChain.rawMaterials.length > 0) ? (
+                        <div className="flex flex-col gap-3">
+                          <SupplyChainGroup title="협력사" icon="factory" items={tagChain.suppliers} link onClose={onClose} />
+                          <SupplyChainGroup title="거점" icon="building" items={tagChain.sites} link onClose={onClose} />
+                          <SupplyChainGroup title="자재" icon="package" items={tagChain.materials} />
+                          <SupplyChainGroup title="원재료(소재)" icon="layers" items={tagChain.rawMaterials} />
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">관련 공급망 정보가 없습니다.</span>
+                      )}
+                    </div>
+                  )}
                 </div>
+              ) : (
+                displayNews.tags && displayNews.tags.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">유관 태그</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {displayNews.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 rounded border border-border bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )
               )}
 
               {/* ══ AI RISK CORE INSIGHTS ══ */}
@@ -301,5 +378,56 @@ export function NewsOverlay({
         )}
       </div>
     </>
+  )
+}
+
+/**
+ * 태그 공급망 정보 그룹 (협력사/거점/자재/원재료). 빈 배열이면 렌더 안 함.
+ * link=true 이면 항목을 explorer 거점 상세로 이동하는 Link 로, 아니면 정적 배지로 표시.
+ */
+function SupplyChainGroup({
+  title,
+  icon,
+  items,
+  link = false,
+  onClose,
+}: {
+  title: string
+  icon: 'factory' | 'building' | 'package' | 'layers'
+  items: SupplyRef[]
+  link?: boolean
+  onClose?: () => void
+}) {
+  if (!items || items.length === 0) return null
+
+  const Icon = icon === 'factory' ? Factory : icon === 'building' ? Building2 : icon === 'package' ? Package : Layers
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map((it) =>
+          link ? (
+            <Link
+              key={it.code}
+              href={`/explorer?entity=${it.code}`}
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              <Icon className="size-3" />
+              {it.nameKo}
+            </Link>
+          ) : (
+            <span
+              key={it.code}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground"
+            >
+              <Icon className="size-3" />
+              {it.nameKo}
+            </span>
+          ),
+        )}
+      </div>
+    </div>
   )
 }

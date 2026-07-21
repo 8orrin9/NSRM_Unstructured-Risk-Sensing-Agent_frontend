@@ -17,6 +17,16 @@ export interface RiskCategoryMeta {
   en: string
 }
 
+export type TagType = 'EVENT' | 'SITE' | 'RAW_MATERIAL' | 'SUPPLIER' | 'MATERIAL'
+
+// 태그 클릭 → 공급망 조인용 메타 (tags[i]와 1:1 정합)
+export interface TagRef {
+  tagId: string
+  tagName: string
+  tagType: TagType
+  linkable: boolean // EVENT 및 공급망 연결키 없는 태그는 false
+}
+
 export interface NewsItem {
   id: string
   title: string
@@ -29,6 +39,7 @@ export interface NewsItem {
   keywords: string[]
   recommendedKeywords: string[] // 신규 Pool 추천 키워드
   tags: string[] // risk tags
+  tagRefs?: TagRef[] // tags와 1:1 정합. 없으면 태그 비클릭(하위호환)
   recommendedTags?: string[] // 신규 EVENT 태그 추천 (매핑 실패 키워드 기반)
   relatedEntityIds: string[] // supplier / site ids
   region: string
@@ -148,6 +159,26 @@ export interface KeywordPoolItem {
   keyword: string
   addedAt: string // ISO
   source: 'recommended' | 'manual'
+}
+
+// 태그와 연결된 공급망 엔티티 참조 (협력사/거점/자재/원재료 공통)
+export interface SupplyRef {
+  code: string
+  nameKo: string
+  nameEng?: string
+  country?: string // supplier / site 만
+  region?: string // supplier / site 만
+}
+
+// 태그 클릭 시 반환되는 공급망 정보
+export interface TagSupplyChain {
+  tagId: string
+  tagType: TagType
+  tagName: string
+  suppliers: SupplyRef[] // 협력사
+  sites: SupplyRef[] // 거점
+  materials: SupplyRef[] // 자재
+  rawMaterials: SupplyRef[] // 원재료
 }
 
 export type EntityType = 'supplier' | 'site' | 'material'

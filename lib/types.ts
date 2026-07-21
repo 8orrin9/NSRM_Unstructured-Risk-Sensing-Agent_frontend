@@ -46,6 +46,18 @@ export interface NewsGroup {
   status: 'active' | 'dissolving' // dynamic grouping state
 }
 
+// 관리자 화면용: 검증된 전체 그룹(숨김 포함) + 노출 상태
+export interface AdminGroup {
+  id: string // `${run_id}:${group_id}`
+  title: string
+  theme: string
+  memberCount: number // 렌더 가능 멤버 수
+  newsIds: string[] // 렌더 가능 멤버 news_id (하위 뉴스 리스트용)
+  autoDisplayed: boolean // compute_group_serving 자동계산 결과
+  adminOverride: boolean | null // 관리자 수동 지정(null=미개입)
+  currentlyShown: boolean // 최종 노출 여부 (override 우선)
+}
+
 // A derived, denormalized group with computed meta + resolved member items
 export interface ResolvedGroup {
   id: string

@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Newspaper, Globe2, FileText } from 'lucide-react'
+import { Newspaper, Globe2, FileText, Settings } from 'lucide-react'
 
 const NAV = [
   { href: '/', label: 'Daily News', icon: Newspaper },
   { href: '/explorer', label: 'Explorer MAP', icon: Globe2 },
   { href: '/reporting', label: 'Reporting', icon: FileText },
+  { href: '/admin/insights', label: '관리자', icon: Settings },
 ]
 
 export function AppShell({ children }: { children: React.ReactNode }) {

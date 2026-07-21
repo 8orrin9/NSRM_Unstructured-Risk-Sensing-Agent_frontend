@@ -4,13 +4,31 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Newspaper, Globe2, FileText, Settings } from 'lucide-react'
+import { Newspaper, Globe2, FileText, Settings, ChevronDown } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
 
-const NAV = [
+type NavItem =
+  | { href: string; label: string; icon: typeof Newspaper }
+  | { label: string; icon: typeof Newspaper; submenu: { href: string; label: string }[] }
+
+const NAV: NavItem[] = [
   { href: '/', label: 'Daily News', icon: Newspaper },
   { href: '/explorer', label: 'Explorer MAP', icon: Globe2 },
   { href: '/reporting', label: 'Reporting', icon: FileText },
-  { href: '/admin/insights', label: '관리자', icon: Settings },
+  {
+    label: '관리자',
+    icon: Settings,
+    submenu: [
+      { href: '/admin/insights', label: 'AI 핵심 인사이트' },
+      { href: '/admin/keywords', label: '뉴스 수집 키워드' },
+      { href: '/admin/tags', label: '태그 관리' },
+    ],
+  },
 ]
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -32,20 +50,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* Nav — Apple-style pill tabs */}
           <nav className="flex items-center gap-0.5">
             {NAV.map((item) => {
-              const active =
-                item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
               const Icon = item.icon
+              const pillClass = (active: boolean) =>
+                cn(
+                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-150',
+                  active
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:text-foreground',
+                )
+
+              // 하위 메뉴가 있는 항목 → 드롭다운
+              if ('submenu' in item) {
+                const active = item.submenu.some((s) => pathname.startsWith(s.href))
+                return (
+                  <DropdownMenu key={item.label}>
+                    <DropdownMenuTrigger className={pillClass(active)}>
+                      <Icon className="size-3.5" />
+                      <span className="hidden sm:block">{item.label}</span>
+                      <ChevronDown className="size-3" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-44">
+                      {item.submenu.map((sub) => (
+                        <DropdownMenuItem
+                          key={sub.href}
+                          render={<Link href={sub.href} />}
+                          className={cn(pathname.startsWith(sub.href) && 'bg-accent text-accent-foreground')}
+                        >
+                          {sub.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )
+              }
+
+              const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-150',
-                    active
-                      ? 'bg-foreground text-background'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
+                <Link key={item.href} href={item.href} className={pillClass(active)}>
                   <Icon className="size-3.5" />
                   <span className="hidden sm:block">{item.label}</span>
                 </Link>

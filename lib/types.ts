@@ -58,6 +58,51 @@ export interface AdminGroup {
   currentlyShown: boolean // 최종 노출 여부 (override 우선)
 }
 
+// 관리자: 뉴스 수집용 키워드 (OP_KEYWORD)
+export interface OpKeyword {
+  id: number
+  risk_category_code: string | null
+  risk_category_name: string | null
+  risk_factor: string | null
+  keyword_group_name: string | null
+  keyword: string | null
+  target_region: string | null
+  description: string | null
+  source: string
+}
+
+// 관리자: 태그 (OP_TAG)
+export interface OpTag {
+  id: number
+  tag_id: string | null
+  target_region: string | null
+  tag_type: string | null
+  name: string | null
+  domain: string | null
+  risk_factor: string | null
+  keyword_count: number | null
+  keywords_full: string | null
+  description: string | null
+  target_table_column: string | null
+  db_matched_count: number | null
+  source: string
+}
+
+// AI 추천 신규 키워드
+export interface RecommendedKeyword {
+  keyword: string
+  count: number
+}
+
+// AI 추천 신규 태그 (EVENT 한정)
+export interface RecommendedTag {
+  name: string
+  tag_type: string
+  risk_factor: string | null
+  description: string | null
+  keywords_full: string | null
+}
+
 // A derived, denormalized group with computed meta + resolved member items
 export interface ResolvedGroup {
   id: string

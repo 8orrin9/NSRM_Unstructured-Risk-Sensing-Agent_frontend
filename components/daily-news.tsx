@@ -254,7 +254,7 @@ export function DailyNews() {
         <section className="flex flex-col gap-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-baseline gap-3">
-              <h2 className="text-xl font-bold tracking-tight text-foreground">Risk Factor Monitor</h2>
+              <h2 className="text-xl font-bold tracking-tight text-foreground">Smart Daily News</h2>
               <span className="text-sm text-muted-foreground">대분류별 뉴스</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">

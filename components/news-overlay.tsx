@@ -179,22 +179,14 @@ export function NewsOverlay({
                   키워드
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {displayNews.keywords.map((k) => {
-                    const isRecommended = displayNews.recommendedKeywords?.includes(k)
-                    return (
-                      <span
-                        key={k}
-                        className={cn(
-                          'inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs',
-                          isRecommended
-                            ? 'border-amber-300 bg-amber-100/50 text-amber-900'
-                            : 'border-border bg-secondary text-secondary-foreground'
-                        )}
-                      >
-                        #{k}
-                      </span>
-                    )
-                  })}
+                  {displayNews.keywords.map((k) => (
+                    <span
+                      key={k}
+                      className="inline-flex items-center gap-1 rounded border border-border bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
+                    >
+                      #{k}
+                    </span>
+                  ))}
                 </div>
               </div>
 

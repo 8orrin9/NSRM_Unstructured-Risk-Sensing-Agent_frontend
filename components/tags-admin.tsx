@@ -11,6 +11,7 @@ import {
   fetchTagRecommendations,
 } from '@/lib/api-client'
 import { AdminDataTable, ConfirmModal, type Column } from '@/components/admin-data-table'
+import { KeywordChips, parseKeywordsFull } from '@/components/keyword-chips'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -42,17 +43,19 @@ const EMPTY_FORM: TagForm = {
 }
 
 const COLUMNS: Column<OpTag>[] = [
-  { key: 'tag_id', label: 'tag_id', className: 'whitespace-nowrap' },
-  { key: 'target_region', label: 'target_region', filterable: true, className: 'whitespace-nowrap' },
-  { key: 'tag_type', label: 'tag_type', filterable: true, className: 'whitespace-nowrap' },
-  { key: 'name', label: 'name' },
-  { key: 'domain', label: 'domain', filterable: true },
-  { key: 'risk_factor', label: 'risk_factor' },
-  { key: 'keyword_count', label: 'keyword_count', className: 'whitespace-nowrap' },
-  { key: 'keywords_full', label: 'keywords_full', className: 'max-w-xs' },
+  { key: 'tag_id', label: '태그 ID', className: 'whitespace-nowrap' },
+  { key: 'tag_type', label: '태그 유형', filterable: true, className: 'whitespace-nowrap' },
+  { key: 'name', label: '태그' },
+  { key: 'domain', label: '카테고리', filterable: true },
+  { key: 'risk_factor', label: '유발 리스크' },
+  {
+    key: 'keywords_full',
+    label: '탐지 키워드',
+    className: 'max-w-md',
+    render: (r) => <KeywordChips items={parseKeywordsFull(r.keywords_full)} />,
+  },
   { key: 'description', label: 'description', className: 'max-w-xs' },
-  { key: 'target_table_column', label: 'target_table_column', className: 'max-w-xs' },
-  { key: 'db_matched_count', label: 'db_matched_count', className: 'whitespace-nowrap' },
+  { key: 'target_region', label: '언어', filterable: true, className: 'whitespace-nowrap' },
 ]
 
 export function TagsAdmin() {
@@ -203,7 +206,7 @@ export function TagsAdmin() {
               <h2 className="text-sm font-semibold text-foreground">AI 추천 신규 태그</h2>
             </div>
             <p className="text-xs text-muted-foreground">
-              파이프라인이 제안·검토한 EVENT 유형 태그 중 아직 등록되지 않은 태그입니다.
+              AI가 검토 결과, 매핑되는 태그가 없는 이벤트 유형의 뉴스 키워드입니다.
             </p>
             {recs.length === 0 ? (
               <p className="py-6 text-center text-xs text-muted-foreground">추천할 태그가 없습니다.</p>
@@ -257,11 +260,11 @@ export function TagsAdmin() {
           >
             <h3 className="text-base font-semibold text-foreground">태그 추가</h3>
             <div className="mt-4 flex flex-col gap-3">
-              <Field label="name *">
+              <Field label="태그 *">
                 <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="태그 이름" />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="tag_type">
+                <Field label="태그 유형">
                   <select
                     value={form.tag_type}
                     onChange={(e) => setForm((f) => ({ ...f, tag_type: e.target.value }))}
@@ -275,7 +278,7 @@ export function TagsAdmin() {
                     ))}
                   </select>
                 </Field>
-                <Field label="target_region">
+                <Field label="언어">
                   <input
                     list="tag-regions"
                     value={form.target_region}
@@ -294,14 +297,14 @@ export function TagsAdmin() {
                 <span>{NON_EVENT_HINT}</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="risk_factor">
+                <Field label="유발 리스크">
                   <Input value={form.risk_factor} onChange={(e) => setForm((f) => ({ ...f, risk_factor: e.target.value }))} />
                 </Field>
-                <Field label="domain">
+                <Field label="카테고리">
                   <Input value={form.domain} onChange={(e) => setForm((f) => ({ ...f, domain: e.target.value }))} />
                 </Field>
               </div>
-              <Field label="keywords_full">
+              <Field label="탐지 키워드">
                 <Input value={form.keywords_full} onChange={(e) => setForm((f) => ({ ...f, keywords_full: e.target.value }))} placeholder="키워드1 | 키워드2" />
               </Field>
               <Field label="description">

@@ -6,7 +6,7 @@ import { fetchNews, fetchNewsGroups, fetchNewsStats, fetchEntities } from '@/lib
 import { buildFeed } from '@/lib/feed'
 import { RISK_CATEGORIES, RISK_FACTORS, SEVERITY_META, CATEGORY_COLORS, severityClasses } from '@/lib/risk-config'
 import { severityToKorean } from '@/lib/severity'
-import type { FeedEntry, KeywordPoolItem, NewsItem, RiskCategory, RiskFactor, ResolvedGroup, Severity, NewsGroup, SupplyEntity } from '@/lib/types'
+import type { FeedEntry, NewsItem, RiskCategory, RiskFactor, ResolvedGroup, Severity, NewsGroup, SupplyEntity } from '@/lib/types'
 import { formatDate, formatTime } from '@/lib/format'
 import { SeverityBadge, CategoryBadge } from '@/components/risk-badges'
 import { NewsOverlay } from '@/components/news-overlay'
@@ -20,8 +20,6 @@ import {
   ArrowRight,
   Layers,
   Link2,
-  Plus,
-  Tag,
   X,
   Search,
   CalendarDays,
@@ -122,21 +120,6 @@ export function DailyNews() {
   const [indivDateTo, setIndivDateTo] = useState('')
   const [sevFilter, setSevFilter] = useState<Severity | 'all'>('all')
   const [catFilter, setCatFilter] = useState<RiskCategory | 'all'>('all')
-
-  // Keyword pool
-  const [keywordPool, setKeywordPool] = useState<KeywordPoolItem[]>([])
-
-  function addKeyword(kw: string) {
-    if (keywordPool.some((k) => k.keyword === kw)) return
-    setKeywordPool((prev) => [
-      ...prev,
-      { keyword: kw, addedAt: new Date().toISOString(), source: 'recommended' },
-    ])
-  }
-
-  function removeKeyword(kw: string) {
-    setKeywordPool((prev) => prev.filter((k) => k.keyword !== kw))
-  }
 
   function resetPage() {
     setIndivPage(1)
@@ -507,37 +490,10 @@ export function DailyNews() {
 
       </div>{/* end Core Insights navy container */}
 
-      {/* ── Keyword Pool ── */}
-      {keywordPool.length > 0 && (
-        <section className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-2">
-            <Tag className="size-4 text-primary" />
-            <h2 className="text-sm font-bold text-foreground">
-              수집 키워드 Pool
-              <span className="ml-2 text-xs font-normal text-muted-foreground">{keywordPool.length}개</span>
-            </h2>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {keywordPool.map((item) => (
-              <span
-                key={item.keyword}
-                className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary"
-              >
-                #{item.keyword}
-                <button onClick={() => removeKeyword(item.keyword)} className="text-primary/60 hover:text-primary">
-                  <X className="size-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* ── News Detail Slide Overlay ── */}
       <NewsOverlay
         news={overlayNews}
         onClose={() => setOverlayNews(null)}
-        onAddKeyword={addKeyword}
       />
     </div>
   )

@@ -11,6 +11,7 @@ import {
   fetchKeywordRecommendations,
 } from '@/lib/api-client'
 import { AdminDataTable, ConfirmModal, type Column } from '@/components/admin-data-table'
+import { KeywordChips, parseKeywordField } from '@/components/keyword-chips'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -38,18 +39,18 @@ const EMPTY_FORM: KeywordForm = {
 }
 
 const COLUMNS: Column<OpKeyword>[] = [
-  { key: 'risk_category_code', label: 'risk_category_code', filterable: true, className: 'whitespace-nowrap' },
-  { key: 'risk_category_name', label: 'risk_category_name', filterable: true },
-  { key: 'risk_factor', label: 'risk_factor' },
-  { key: 'keyword_group_name', label: 'keyword_group_name' },
+  { key: 'risk_category_code', label: 'Risk Factor 분류 코드', filterable: true, className: 'whitespace-nowrap' },
+  { key: 'risk_category_name', label: 'Risk Factor 분류 이름', filterable: true },
+  { key: 'risk_factor', label: 'Risk Factor' },
+  { key: 'keyword_group_name', label: '대표 키워드' },
   {
     key: 'keyword',
-    label: 'keyword',
+    label: '키워드',
     className: 'max-w-md',
-    render: (r) => <span className="break-words">{r.keyword}</span>,
+    render: (r) => <KeywordChips items={parseKeywordField(r.keyword)} />,
   },
-  { key: 'target_region', label: 'target_region', filterable: true, className: 'whitespace-nowrap' },
   { key: 'description', label: 'description', className: 'max-w-xs' },
+  { key: 'target_region', label: '언어', filterable: true, className: 'whitespace-nowrap' },
 ]
 
 export function KeywordsAdmin() {
@@ -100,8 +101,13 @@ export function KeywordsAdmin() {
     }
     try {
       setSaving(true)
+      // 콤마 구분 입력 → JSON 배열 문자열로 저장 (기존 저장 형식과 정합)
+      const keywordList = form.keyword
+        .split(',')
+        .map((k) => k.trim())
+        .filter(Boolean)
       await createKeyword({
-        keyword: form.keyword.trim(),
+        keyword: JSON.stringify(keywordList),
         risk_category_code: form.risk_category_code || null,
         risk_category_name: form.risk_category_name || null,
         risk_factor: form.risk_factor || null,
@@ -259,11 +265,11 @@ export function KeywordsAdmin() {
           >
             <h3 className="text-base font-semibold text-foreground">키워드 추가</h3>
             <div className="mt-4 flex flex-col gap-3">
-              <Field label="keyword *">
-                <Input value={form.keyword} onChange={(e) => setForm((f) => ({ ...f, keyword: e.target.value }))} placeholder='예: ["ECCN", "수출통제"] 또는 단일 키워드' />
+              <Field label="키워드 *">
+                <Input value={form.keyword} onChange={(e) => setForm((f) => ({ ...f, keyword: e.target.value }))} placeholder="예: ECCN, 수출통제" />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="risk_category_code">
+                <Field label="Risk Factor 분류 코드">
                   <input
                     list="kw-cat-codes"
                     value={form.risk_category_code}
@@ -277,7 +283,7 @@ export function KeywordsAdmin() {
                     ))}
                   </datalist>
                 </Field>
-                <Field label="target_region">
+                <Field label="언어">
                   <input
                     list="kw-regions"
                     value={form.target_region}
@@ -292,14 +298,14 @@ export function KeywordsAdmin() {
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="risk_category_name">
+                <Field label="Risk Factor 분류 이름">
                   <Input value={form.risk_category_name} onChange={(e) => setForm((f) => ({ ...f, risk_category_name: e.target.value }))} />
                 </Field>
-                <Field label="risk_factor">
+                <Field label="Risk Factor">
                   <Input value={form.risk_factor} onChange={(e) => setForm((f) => ({ ...f, risk_factor: e.target.value }))} />
                 </Field>
               </div>
-              <Field label="keyword_group_name">
+              <Field label="대표 키워드">
                 <Input value={form.keyword_group_name} onChange={(e) => setForm((f) => ({ ...f, keyword_group_name: e.target.value }))} />
               </Field>
               <Field label="description">

@@ -29,6 +29,8 @@ import {
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
 const PAGE_SIZE = 5
+const GROUP_INITIAL = 6 // Risk Groups 초기 노출 수
+const GROUP_STEP = 3 // 더보기 클릭당 추가 노출 수
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -96,6 +98,8 @@ export function DailyNews() {
 
   // Risk Group section state — 행 단위 접기/펼치기 (기본 모두 접힘)
   const [openRows, setOpenRows] = useState<Set<number>>(new Set<number>())
+  // Risk Group 더보기 — 노출 개수 (기본 GROUP_INITIAL, 더보기 클릭 시 GROUP_STEP씩 증가)
+  const [groupVisible, setGroupVisible] = useState(GROUP_INITIAL)
   // 반응형 그리드 컬럼 수 추적 (md:2 / lg:3, 기본 3)
   const [groupCols, setGroupCols] = useState(3)
   useEffect(() => {
@@ -350,7 +354,7 @@ export function DailyNews() {
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {allGroups.map((entry, idx) => {
+              {allGroups.slice(0, groupVisible).map((entry, idx) => {
                 const rowIndex = Math.floor(idx / groupCols)
                 return (
                   <GroupCard
@@ -365,6 +369,14 @@ export function DailyNews() {
                 )
               })}
             </div>
+            {allGroups.length > groupVisible && (
+              <button
+                onClick={() => setGroupVisible((v) => v + GROUP_STEP)}
+                className="mx-auto flex items-center gap-1.5 rounded-full border border-insight-border bg-insight-bg px-4 py-1.5 text-xs font-medium text-insight-muted transition-colors hover:border-primary hover:text-primary"
+              >
+                더보기 ({allGroups.length - groupVisible}개 남음)
+              </button>
+            )}
           </section>
         )}
 

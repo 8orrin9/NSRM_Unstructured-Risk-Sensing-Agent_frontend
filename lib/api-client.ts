@@ -2,7 +2,7 @@
  * Backend API 클라이언트
  * FastAPI Backend와 통신
  */
-import type { NewsItem, NewsGroup, SupplyEntity } from './types'
+import type { NewsItem, NewsGroup, SupplyEntity, AdminGroup } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8007/api'
 
@@ -57,6 +57,34 @@ export async function fetchNewsGroups(): Promise<NewsGroup[]> {
   }
 
   return res.json()
+}
+
+/**
+ * 관리자: 검증된 전체 그룹(숨김 포함) + 노출 상태 조회
+ */
+export async function fetchAdminGroups(): Promise<AdminGroup[]> {
+  const res = await fetch(`${API_BASE_URL}/admin/groups`)
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch admin groups: ${res.statusText}`)
+  }
+
+  return res.json()
+}
+
+/**
+ * 관리자: 노출 그룹 선택 저장 (노출할 그룹 id 전체 목록)
+ */
+export async function saveAdminGroupDisplay(shownIds: string[]): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/admin/groups/display`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ shownIds }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`Failed to save admin group display: ${res.statusText}`)
+  }
 }
 
 /**

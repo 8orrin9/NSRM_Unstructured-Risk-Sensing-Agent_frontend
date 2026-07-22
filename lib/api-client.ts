@@ -9,6 +9,13 @@ import type {
   RawMaterialRow, MaterialRow, SiteRow, SupplierRow,
 } from './types'
 
+import {
+  DUMMY_IRAN_NEWS, DUMMY_IRAN_GROUP, DUMMY_IRAN_ENTITIES, DUMMY_IRAN_ADMIN_GROUP,
+  DUMMY_REPORT_MARKDOWN,
+  isDummyNewsId, isDummyEntityId, isDummyTagId, hasDummySelection,
+  dummyNewsForEntity, dummyTagSupplyChain,
+} from './dummy-iran'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8007/api'
 
 /**
@@ -35,13 +42,28 @@ export async function fetchNews(params?: {
     throw new Error(`Failed to fetch news: ${res.statusText}`)
   }
 
-  return res.json()
+  const news: NewsItem[] = await res.json()
+
+  // 시연용 더미(이란 전쟁·호르무즈/홍해) 병합. 국내 한정(domestic_only)에는 미포함.
+  if (!params?.domestic_only) {
+    let dummies = DUMMY_IRAN_NEWS
+    if (params?.severity) dummies = dummies.filter((n) => n.severity === params.severity)
+    return [...dummies, ...news]
+  }
+
+  return news
 }
 
 /**
  * 특정 뉴스 조회
  */
 export async function fetchNewsById(id: string): Promise<NewsItem> {
+  // 시연용 더미 뉴스는 백엔드 조회 없이 반환
+  if (isDummyNewsId(id)) {
+    const found = DUMMY_IRAN_NEWS.find((n) => n.id === id)
+    if (found) return found
+  }
+
   const res = await fetch(`${API_BASE_URL}/news/${id}`)
 
   if (!res.ok) {
@@ -61,7 +83,9 @@ export async function fetchNewsGroups(): Promise<NewsGroup[]> {
     throw new Error(`Failed to fetch news groups: ${res.statusText}`)
   }
 
-  return res.json()
+  const groups: NewsGroup[] = await res.json()
+  // 시연용 더미 그룹(이란) 병합
+  return [DUMMY_IRAN_GROUP, ...groups]
 }
 
 /**
@@ -74,7 +98,9 @@ export async function fetchAdminGroups(): Promise<AdminGroup[]> {
     throw new Error(`Failed to fetch admin groups: ${res.statusText}`)
   }
 
-  return res.json()
+  const groups: AdminGroup[] = await res.json()
+  // 시연용 더미 그룹(이란) 병합 — fetchNewsGroups와 동일 패턴
+  return [DUMMY_IRAN_ADMIN_GROUP, ...groups]
 }
 
 /**
@@ -225,26 +251,43 @@ export async function fetchEntities(params?: {
     throw new Error(`Failed to fetch entities: ${res.statusText}`)
   }
 
-  return res.json()
+  const entities: SupplyEntity[] = await res.json()
+  // 시연용 더미 중동 물류 거점 병합
+  return [...entities, ...DUMMY_IRAN_ENTITIES]
 }
 
 /**
  * 특정 거점과 관련된 뉴스 조회
  */
 export async function fetchEntityNews(entityId: string): Promise<NewsItem[]> {
+  const dummies = dummyNewsForEntity(entityId)
+
+  // 신규 더미 거점(호르무즈/홍해/수에즈)은 백엔드에 없으므로 더미만 반환
+  if (isDummyEntityId(entityId)) {
+    return dummies
+  }
+
   const res = await fetch(`${API_BASE_URL}/entities/${entityId}/news`)
 
   if (!res.ok) {
     throw new Error(`Failed to fetch entity news: ${res.statusText}`)
   }
 
-  return res.json()
+  const news: NewsItem[] = await res.json()
+  // 기존 거점(asml/merck/samsung-giheung 등)에 편입된 이란 더미 뉴스 병합
+  return [...dummies, ...news]
 }
 
 /**
  * 특정 태그와 관련된 공급망 정보 조회 (자재/원재료/협력사/거점)
  */
 export async function fetchTagSupplyChain(tagId: string): Promise<TagSupplyChain> {
+  // 시연용 더미 태그(이란)는 백엔드 조회 없이 사전 정의 공급망 반환
+  if (isDummyTagId(tagId)) {
+    const found = dummyTagSupplyChain(tagId)
+    if (found) return found
+  }
+
   const res = await fetch(`${API_BASE_URL}/tags/${encodeURIComponent(tagId)}/supply-chain`)
 
   if (!res.ok) {
@@ -264,6 +307,28 @@ export async function generateReport(params: {
   tone?: string
   instruction?: string
 }): Promise<Response> {
+  // 시연용: 선택에 더미 뉴스가 포함되면 백엔드(DB 재조회) 대신
+  // 사전 작성 리포트를 청크 단위로 흘려보내는 스트리밍 Response를 반환한다.
+  if (hasDummySelection(params.newsIds)) {
+    const encoder = new TextEncoder()
+    const text = DUMMY_REPORT_MARKDOWN
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        // 문단 단위로 끊어 타이핑되는 듯한 스트리밍 효과
+        const chunks = text.match(/[\s\S]{1,24}/g) ?? [text]
+        for (const chunk of chunks) {
+          controller.enqueue(encoder.encode(chunk))
+          await new Promise((r) => setTimeout(r, 20))
+        }
+        controller.close()
+      },
+    })
+    return new Response(stream, {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    })
+  }
+
   const res = await fetch(`${API_BASE_URL}/reports/generate`, {
     method: 'POST',
     headers: {

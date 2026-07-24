@@ -21,10 +21,13 @@ import {
   isDemoNewsId, isDemoEntityId, demoNewsForEntity,
   isDemoSupplyTagId, demoTagSupplyChain,
   isDemoGroupId, demoGroupReport,
-  getHiddenDemoGroupIds, saveHiddenDemoGroupIds,
+  getHiddenDemoGroupIds, saveHiddenDemoGroupIds, DEMO_GROUP_IDS,
 } from './dummy-demo'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8007/api'
+
+// 관리자 노출 토글을 localStorage로 유지할 전체 더미 그룹 id (데모 3그룹 + 이란 그룹).
+const MANAGED_DUMMY_GROUP_IDS = new Set<string>([...DEMO_GROUP_IDS, DUMMY_IRAN_GROUP.id])
 
 /**
  * 뉴스 목록 조회
@@ -109,7 +112,8 @@ export async function fetchNewsGroups(): Promise<NewsGroup[]> {
   // 관리자가 localStorage로 숨긴 데모 그룹은 Daily News 인사이트에서도 제외한다.
   const hidden = getHiddenDemoGroupIds()
   const demoGroups = DEMO_GROUPS.filter((g) => !hidden.has(g.id))
-  return [...demoGroups, DUMMY_IRAN_GROUP, ...groups]
+  const iranGroups = hidden.has(DUMMY_IRAN_GROUP.id) ? [] : [DUMMY_IRAN_GROUP]
+  return [...demoGroups, ...iranGroups, ...groups]
 }
 
 /**
@@ -130,15 +134,20 @@ export async function fetchAdminGroups(): Promise<AdminGroup[]> {
     ...g,
     currentlyShown: !hidden.has(g.id),
   }))
-  return [...demoAdminGroups, DUMMY_IRAN_ADMIN_GROUP, ...groups]
+  const iranAdminGroup = {
+    ...DUMMY_IRAN_ADMIN_GROUP,
+    currentlyShown: !hidden.has(DUMMY_IRAN_ADMIN_GROUP.id),
+  }
+  return [...demoAdminGroups, iranAdminGroup, ...groups]
 }
 
 /**
  * 관리자: 노출 그룹 선택 저장 (노출할 그룹 id 전체 목록)
  */
 export async function saveAdminGroupDisplay(shownIds: string[]): Promise<void> {
-  // 데모 그룹(백엔드 미인지)의 숨김 상태는 localStorage에 저장해 새로고침 후에도 유지.
-  saveHiddenDemoGroupIds(shownIds)
+  // 더미 그룹(백엔드 미인지: 데모 3그룹 + 이란 그룹)의 숨김 상태는
+  // localStorage에 저장해 새로고침 후에도 유지.
+  saveHiddenDemoGroupIds(shownIds, MANAGED_DUMMY_GROUP_IDS)
 
   const res = await fetch(`${API_BASE_URL}/admin/groups/display`, {
     method: 'POST',

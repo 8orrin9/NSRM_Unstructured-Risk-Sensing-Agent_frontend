@@ -16,6 +16,14 @@ import {
   dummyNewsForEntity, dummyTagSupplyChain,
 } from './dummy-iran'
 
+import {
+  DEMO_NEWS, DEMO_GROUPS, DEMO_ENTITIES, DEMO_ADMIN_GROUPS,
+  isDemoNewsId, isDemoEntityId, demoNewsForEntity,
+  isDemoSupplyTagId, demoTagSupplyChain,
+  isDemoGroupId, demoGroupReport,
+  getHiddenDemoGroupIds, saveHiddenDemoGroupIds,
+} from './dummy-demo'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8007/api'
 
 /**
@@ -44,11 +52,20 @@ export async function fetchNews(params?: {
 
   const news: NewsItem[] = await res.json()
 
-  // 시연용 더미(이란 전쟁·호르무즈/홍해) 병합. 국내 한정(domestic_only)에는 미포함.
+  // 시연용 더미 병합. 국내 한정(domestic_only)에는 미포함.
   if (!params?.domestic_only) {
+    // 엑셀 시연 뉴스(DEMO_NEWS)는 필터 없이 전부 노출(Low·협력사동향 포함).
+    // 기존/백엔드 뉴스 + 이란 더미는 Low·협력사동향(supply) 제거.
+    let demo = DEMO_NEWS
     let dummies = DUMMY_IRAN_NEWS
-    if (params?.severity) dummies = dummies.filter((n) => n.severity === params.severity)
-    return [...dummies, ...news]
+    if (params?.severity) {
+      demo = demo.filter((n) => n.severity === params.severity)
+      dummies = dummies.filter((n) => n.severity === params.severity)
+    }
+    const rest = [...dummies, ...news].filter(
+      (n) => n.severity !== 'low' && n.category !== 'supply',
+    )
+    return [...demo, ...rest]
   }
 
   return news
@@ -61,6 +78,10 @@ export async function fetchNewsById(id: string): Promise<NewsItem> {
   // 시연용 더미 뉴스는 백엔드 조회 없이 반환
   if (isDummyNewsId(id)) {
     const found = DUMMY_IRAN_NEWS.find((n) => n.id === id)
+    if (found) return found
+  }
+  if (isDemoNewsId(id)) {
+    const found = DEMO_NEWS.find((n) => n.id === id)
     if (found) return found
   }
 
@@ -84,8 +105,11 @@ export async function fetchNewsGroups(): Promise<NewsGroup[]> {
   }
 
   const groups: NewsGroup[] = await res.json()
-  // 시연용 더미 그룹(이란) 병합
-  return [DUMMY_IRAN_GROUP, ...groups]
+  // 시연용 더미 그룹(이란 + 07.24 시연 3그룹) 병합.
+  // 관리자가 localStorage로 숨긴 데모 그룹은 Daily News 인사이트에서도 제외한다.
+  const hidden = getHiddenDemoGroupIds()
+  const demoGroups = DEMO_GROUPS.filter((g) => !hidden.has(g.id))
+  return [...demoGroups, DUMMY_IRAN_GROUP, ...groups]
 }
 
 /**
@@ -99,14 +123,23 @@ export async function fetchAdminGroups(): Promise<AdminGroup[]> {
   }
 
   const groups: AdminGroup[] = await res.json()
-  // 시연용 더미 그룹(이란) 병합 — fetchNewsGroups와 동일 패턴
-  return [DUMMY_IRAN_ADMIN_GROUP, ...groups]
+  // 시연용 더미 그룹(이란 + 07.24 시연 3그룹) 병합 — fetchNewsGroups와 동일 패턴.
+  // 데모 그룹의 노출 상태(currentlyShown)는 localStorage 숨김 집합으로 덮어쓴다.
+  const hidden = getHiddenDemoGroupIds()
+  const demoAdminGroups = DEMO_ADMIN_GROUPS.map((g) => ({
+    ...g,
+    currentlyShown: !hidden.has(g.id),
+  }))
+  return [...demoAdminGroups, DUMMY_IRAN_ADMIN_GROUP, ...groups]
 }
 
 /**
  * 관리자: 노출 그룹 선택 저장 (노출할 그룹 id 전체 목록)
  */
 export async function saveAdminGroupDisplay(shownIds: string[]): Promise<void> {
+  // 데모 그룹(백엔드 미인지)의 숨김 상태는 localStorage에 저장해 새로고침 후에도 유지.
+  saveHiddenDemoGroupIds(shownIds)
+
   const res = await fetch(`${API_BASE_URL}/admin/groups/display`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -251,18 +284,18 @@ export async function fetchEntities(params?: {
   }
 
   const entities: SupplyEntity[] = await res.json()
-  // 시연용 더미 중동 물류 거점 병합
-  return [...entities, ...DUMMY_IRAN_ENTITIES]
+  // 시연용 더미 거점(중동 물류 결절점 + 07.24 시연 협력사) 병합
+  return [...entities, ...DUMMY_IRAN_ENTITIES, ...DEMO_ENTITIES]
 }
 
 /**
  * 특정 거점과 관련된 뉴스 조회
  */
 export async function fetchEntityNews(entityId: string): Promise<NewsItem[]> {
-  const dummies = dummyNewsForEntity(entityId)
+  const dummies = [...dummyNewsForEntity(entityId), ...demoNewsForEntity(entityId)]
 
-  // 신규 더미 거점(호르무즈/홍해/수에즈)은 백엔드에 없으므로 더미만 반환
-  if (isDummyEntityId(entityId)) {
+  // 신규 더미 거점(호르무즈/홍해/수에즈 + 07.24 시연 협력사)은 백엔드에 없으므로 더미만 반환
+  if (isDummyEntityId(entityId) || isDemoEntityId(entityId)) {
     return dummies
   }
 
@@ -273,7 +306,7 @@ export async function fetchEntityNews(entityId: string): Promise<NewsItem[]> {
   }
 
   const news: NewsItem[] = await res.json()
-  // 기존 거점(asml/merck/samsung-giheung 등)에 편입된 이란 더미 뉴스 병합
+  // 기존 거점(asml/merck/samsung-giheung 등)에 편입된 더미 뉴스 병합
   return [...dummies, ...news]
 }
 
@@ -284,6 +317,10 @@ export async function fetchTagSupplyChain(tagId: string): Promise<TagSupplyChain
   // 시연용 더미 태그(이란)는 백엔드 조회 없이 사전 정의 공급망 반환
   if (isDummyTagId(tagId)) {
     const found = dummyTagSupplyChain(tagId)
+    if (found) return found
+  }
+  if (isDemoSupplyTagId(tagId)) {
+    const found = demoTagSupplyChain(tagId)
     if (found) return found
   }
 
@@ -305,12 +342,15 @@ export async function generateReport(params: {
   sender?: string
   tone?: string
   instruction?: string
+  groupId?: string
 }): Promise<Response> {
   // 시연용: 선택에 더미 뉴스가 포함되면 백엔드(DB 재조회) 대신
   // 사전 작성 리포트를 청크 단위로 흘려보내는 스트리밍 Response를 반환한다.
-  if (hasDummySelection(params.newsIds)) {
+  // groupId가 데모 3그룹이면 그룹 전용 보고서를, 그 외 더미 선택은 이란 리포트를 사용.
+  const demoReport = params.groupId && isDemoGroupId(params.groupId) ? demoGroupReport(params.groupId) : null
+  if (demoReport || hasDummySelection(params.newsIds)) {
     const encoder = new TextEncoder()
-    const text = DUMMY_REPORT_MARKDOWN
+    const text = demoReport ?? DUMMY_REPORT_MARKDOWN
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         // 문단 단위로 끊어 타이핑되는 듯한 스트리밍 효과

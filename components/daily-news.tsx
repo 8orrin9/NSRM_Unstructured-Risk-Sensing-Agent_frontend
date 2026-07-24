@@ -10,6 +10,12 @@ import type { FeedEntry, NewsItem, RiskCategory, RiskFactor, ResolvedGroup, Seve
 import { formatDate, formatDateTime } from '@/lib/format'
 import { SeverityBadge, CategoryBadge } from '@/components/risk-badges'
 import { NewsOverlay } from '@/components/news-overlay'
+import { ReportingModal } from '@/components/reporting-modal'
+import {
+  DEMO_GROUP_TAGS,
+  getDemoTagDetail,
+  type DemoTagDetail,
+} from '@/lib/dummy-demo'
 import { cn } from '@/lib/utils'
 import {
   ChevronDown,
@@ -32,6 +38,8 @@ import {
   CloudRain,
   Scale,
   Truck,
+  Tag,
+  FileText,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -62,6 +70,14 @@ function newsForFactor(factor: RiskFactor, NEWS: NewsItem[]): NewsItem[] {
 
 function isoDate(iso: string) {
   return iso.slice(0, 10)
+}
+
+// AI 인사이트(rationale) 텍스트를 문장 단위로 분리 (불렛 표기용)
+function splitSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.。!?])\s+|\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
@@ -97,6 +113,8 @@ export function DailyNews() {
 
   // Slide overlay state
   const [overlayNews, setOverlayNews] = useState<NewsItem | null>(null)
+  // Reporting 모달 state (그룹 카드 Reporting 버튼)
+  const [reportingGroup, setReportingGroup] = useState<ResolvedGroup | null>(null)
 
   // Risk Factor section state — 행 단위 접기/펼치기 (기본 모두 펼침)
   const [collapsedFactorRows, setCollapsedFactorRows] = useState<Set<number>>(new Set<number>())
@@ -368,11 +386,11 @@ export function DailyNews() {
                   <GroupCard
                     key={entry.group.id}
                     group={entry.group}
-                    index={idx}
                     entities={ENTITIES}
                     open={openRows.has(rowIndex)}
                     onToggle={() => toggleRow(rowIndex)}
                     onOpenOverlay={setOverlayNews}
+                    onOpenReporting={setReportingGroup}
                   />
                 )
               })}
@@ -523,6 +541,12 @@ export function DailyNews() {
         news={overlayNews}
         onClose={() => setOverlayNews(null)}
       />
+
+      {/* ── Reporting Modal (그룹 카드 Reporting 버튼) ── */}
+      <ReportingModal
+        group={reportingGroup}
+        onClose={() => setReportingGroup(null)}
+      />
     </div>
   )
 }
@@ -616,50 +640,71 @@ function FactorCard({
 
 function GroupCard({
   group,
-  index,
   entities: allEntities,
   open,
   onToggle,
   onOpenOverlay,
+  onOpenReporting,
 }: {
   group: ResolvedGroup
-  index: number
   entities: SupplyEntity[]
   open: boolean
   onToggle: () => void
   onOpenOverlay: (news: NewsItem) => void
+  onOpenReporting: (group: ResolvedGroup) => void
 }) {
-  const [showAllEntities, setShowAllEntities] = useState(false)
+  const c = severityClasses(group.severity)
   const entities = group.relatedEntityIds
     .map((id) => allEntities.find((e) => e.id === id))
     .filter(Boolean)
-  const visibleEntities = showAllEntities ? entities : entities.slice(0, 1)
+
+  // 시연용: AI 핵심 인사이트 그룹에 한해 "연관 태그"(개별 자재/협력사) 노출
+  const tags = DEMO_GROUP_TAGS[group.id]
+  const [openTag, setOpenTag] = useState<DemoTagDetail | null>(null)
 
   return (
-    <article
-      className="flex flex-col overflow-hidden rounded-xl border border-insight-border bg-insight-card shadow-sm"
-      style={{ borderTopWidth: 3, borderTopColor: `var(--${SEVERITY_META[group.severity].token})` }}
-    >
+    <>
+    <article className="flex flex-col overflow-hidden rounded-xl border border-insight-border bg-insight-card shadow-sm">
+      {/* 메타행 — 음영 배경, 클릭 시 그룹 펼치기 / 심각도 등급은 우측 상단 */}
       <button
         onClick={onToggle}
-        className="flex w-full flex-col gap-2.5 p-4 text-left transition-colors hover:brightness-110"
+        className="flex w-full items-center gap-2 bg-insight-bg/70 px-4 py-2.5 text-left transition-colors hover:bg-insight-bg"
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
-            인사이트 {index + 1}
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+          <Layers className="size-3" />
+          인사이트 {group.items.length}건
+        </span>
+        <CategoryBadge category={group.category} />
+        {group.status === 'active' && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-insight-border bg-insight-card px-2 py-0.5 text-[11px] font-medium text-insight-muted">
+            <span className="size-1.5 animate-pulse rounded-full bg-risk-high" />
+            Live
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
-            <Layers className="size-3" />
-            {group.items.length}건
-          </span>
-          <CategoryBadge category={group.category} />
-          <ChevronDown className={cn('ml-auto size-4 shrink-0 text-insight-muted transition-transform', open && 'rotate-180')} />
-        </div>
-        <h3 className="text-pretty text-sm font-bold leading-snug text-insight-card-foreground">{group.title}</h3>
-        <span className="text-xs text-insight-muted">
-          뉴스 발행 시각 {formatDateTime(group.earliestAt)} → {formatDateTime(group.latestAt)}
+        )}
+        <span className="ml-auto flex shrink-0 items-center gap-2">
+          <SeverityBadge severity={group.severity} />
+          <ChevronDown className={cn('size-4 text-insight-muted transition-transform', open && 'rotate-180')} />
         </span>
       </button>
+
+      {/* 제목 · 발행시각 · Reporting — 흰 배경 */}
+      <div className="flex flex-col gap-2.5 px-4 py-3">
+        <button onClick={onToggle} className="text-left transition-opacity hover:opacity-80">
+          <h3 className="text-pretty text-sm font-bold leading-snug text-insight-card-foreground">{group.title}</h3>
+        </button>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs text-insight-muted">
+            {formatDateTime(group.earliestAt)} → {formatDateTime(group.latestAt)}
+          </span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenReporting(group) }}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            <FileText className="size-3" />
+            Reporting
+          </button>
+        </div>
+      </div>
 
       {open && (
         <>
@@ -667,12 +712,33 @@ function GroupCard({
           <div className="flex items-start gap-2 border-t border-insight-border bg-insight-bg/60 px-4 py-3">
             <Link2 className="mt-0.5 size-3.5 shrink-0 text-primary" />
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">AI 그룹화 · 리스크 판단 근거</span>
-              <p className="text-xs leading-relaxed text-insight-muted">{group.rationale}</p>
-              {entities.length > 0 && (
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">AI 인사이트</span>
+              <ul className="flex flex-col gap-1">
+                {splitSentences(group.rationale).map((s, i) => (
+                  <li key={i} className="flex gap-1.5 text-xs leading-relaxed text-insight-muted">
+                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-primary/60" />
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+              {tags && tags.length > 0 ? (
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-insight-muted">연관 태그:</span>
+                  {tags.map((t) => (
+                    <button
+                      key={t.tagId}
+                      onClick={() => setOpenTag(getDemoTagDetail(t.tagId))}
+                      className="inline-flex items-center gap-1 rounded border border-insight-border bg-insight-card px-1.5 py-0.5 text-[11px] font-medium text-insight-card-foreground transition-colors hover:border-primary hover:text-primary"
+                    >
+                      <Tag className="size-2.5" />
+                      {t.tagName}
+                    </button>
+                  ))}
+                </div>
+              ) : entities.length > 0 ? (
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   <span className="text-[11px] text-insight-muted">연관 생산지:</span>
-                  {visibleEntities.map((e) => (
+                  {entities.map((e) => (
                     <Link
                       key={e!.id}
                       href={`/explorer?entity=${e!.id}`}
@@ -682,16 +748,8 @@ function GroupCard({
                       {e!.nameKo}
                     </Link>
                   ))}
-                  {entities.length > 1 && (
-                    <button
-                      onClick={() => setShowAllEntities((v) => !v)}
-                      className="inline-flex items-center rounded border border-insight-border bg-insight-bg px-1.5 py-0.5 text-[11px] font-medium text-primary transition-colors hover:border-primary"
-                    >
-                      {showAllEntities ? '접기' : `+${entities.length - 1} 더보기`}
-                    </button>
-                  )}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -709,9 +767,12 @@ function GroupCard({
                       onClick={() => onOpenOverlay(n)}
                       className="flex w-full flex-col gap-1 rounded-md border border-insight-border bg-insight-bg px-3 py-2.5 text-left transition-colors hover:border-primary/60 hover:brightness-110"
                     >
-                      <div className="flex items-center justify-between gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-[11px] text-insight-muted">{formatDateTime(n.publishedAt)} · {n.source}</span>
-                        <SeverityBadge severity={n.severity} format="en" />
+                        {i === group.items.length - 1 && (
+                          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">최신</span>
+                        )}
+                        <SeverityBadge severity={n.severity} />
                       </div>
                       <span className="text-pretty text-xs font-semibold leading-snug text-insight-card-foreground">{n.title}</span>
                       <span className="line-clamp-1 text-[11px] text-insight-muted">{n.summary}</span>
@@ -724,6 +785,65 @@ function GroupCard({
         </>
       )}
     </article>
+    {openTag && <TagDetailPopup detail={openTag} onClose={() => setOpenTag(null)} />}
+    </>
+  )
+}
+
+// ─── TagDetailPopup (연관 태그 클릭 → 엑셀 1행 속성-값 표) ──────────────────────
+// UI에 dialog 컴포넌트가 없어 news-overlay.tsx의 백드롭 패턴을 따른다.
+
+function TagDetailPopup({ detail, onClose }: { detail: DemoTagDetail; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-[1400] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="z-[1410] w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Tag className="size-3.5" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                {detail.kind === 'material' ? '자재' : '협력사'}
+              </span>
+              <span className="text-sm font-bold text-foreground">{detail.tagName}</span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+        <table className="w-full text-sm">
+          <tbody>
+            {detail.rows.map((r) => (
+              <tr key={r.label} className="border-b border-border last:border-b-0">
+                <th className="w-2/5 bg-muted/30 px-4 py-2.5 text-left align-top text-xs font-semibold text-muted-foreground">
+                  {r.label}
+                </th>
+                <td className="px-4 py-2.5 text-left font-medium text-foreground">{r.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   )
 }
 

@@ -874,11 +874,18 @@ export function getHiddenDemoGroupIds(): Set<string> {
   }
 }
 
-/** 노출 대상 id 목록(shownIds)을 받아, 데모 그룹의 숨김 상태만 localStorage에 반영 */
-export function saveHiddenDemoGroupIds(shownIds: string[]): void {
+/**
+ * 노출 대상 id 목록(shownIds)을 받아, 더미 그룹의 숨김 상태를 localStorage에 반영.
+ * managedGroupIds: 숨김 여부를 관리할 전체 더미 그룹 id (기본은 데모 3그룹).
+ * 이란 그룹처럼 별도 정의된 더미 그룹도 유지하려면 호출부에서 함께 넘긴다.
+ */
+export function saveHiddenDemoGroupIds(
+  shownIds: string[],
+  managedGroupIds: Iterable<string> = DEMO_GROUP_IDS,
+): void {
   if (typeof window === 'undefined') return
   const shown = new Set(shownIds)
-  const hidden = [...DEMO_GROUP_IDS].filter((id) => !shown.has(id))
+  const hidden = [...managedGroupIds].filter((id) => !shown.has(id))
   try {
     window.localStorage.setItem(DEMO_HIDDEN_KEY, JSON.stringify(hidden))
   } catch {

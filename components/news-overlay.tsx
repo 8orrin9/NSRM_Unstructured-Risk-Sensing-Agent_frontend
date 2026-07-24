@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { fetchNewsById, fetchEntities, fetchTagSupplyChain } from '@/lib/api-client'
 import { formatDateTime } from '@/lib/format'
-import { severityClasses, SEVERITY_META } from '@/lib/risk-config'
+import { severityClasses } from '@/lib/risk-config'
 import { SeverityBadge, CategoryBadge } from '@/components/risk-badges'
 import { cn } from '@/lib/utils'
 import type { NewsItem, SupplyEntity, TagSupplyChain, SupplyRef } from '@/lib/types'
@@ -85,9 +85,8 @@ export function NewsOverlay({
         .filter(Boolean)
     : []
 
-  // 원문 길이 제한
-  const contentPreview = displayNews?.detail.slice(0, 300) || ''
-  const hasMore = (displayNews?.detail.length || 0) > 300
+  // 원문 존재 여부 (기본 접힘, 펼칠 때만 노출)
+  const hasDetail = (displayNews?.detail.length || 0) > 0
 
   return (
     <>
@@ -110,20 +109,24 @@ export function NewsOverlay({
         {/* Header */}
         <div className={cn('flex shrink-0 items-center justify-between gap-3 border-b border-border p-4', c?.bg)}>
           <div className="flex flex-wrap items-center gap-2">
+            {displayNews && (
+              <SeverityBadge
+                severity={displayNews.severity}
+                format="en"
+                className="px-3 py-1 text-sm font-bold shadow-sm ring-2 ring-inset ring-current/20"
+              />
+            )}
             {displayNews && <CategoryBadge category={displayNews.category} />}
             <span className="text-xs text-muted-foreground">
               {displayNews?.source} · {displayNews ? formatDateTime(displayNews.publishedAt) : ''}
             </span>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {displayNews && <SeverityBadge severity={displayNews.severity} format="en" />}
-            <button
-              onClick={onClose}
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
         </div>
 
         {/* Body */}
@@ -132,64 +135,51 @@ export function NewsOverlay({
             <>
               <h2 className="text-pretty text-base font-bold leading-snug text-foreground">{displayNews.title}</h2>
 
+              {/* 1. 요약 — 불렛 리스트로 렌더 */}
               <div className="flex flex-col gap-1.5">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">요약 · Summary</span>
-                <p className="text-sm leading-relaxed text-foreground">{displayNews.summary}</p>
+                <SummaryBullets summary={displayNews.summary} />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">뉴스 원문 · Full Contents</span>
-                  {hasMore && (
+              {/* 2. 원문 Full Contents — 기본 접힘, 우측 "원문 보기" 링크 */}
+              {hasDetail && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
                     <button
                       onClick={() => setFullTextExpanded(!fullTextExpanded)}
-                      className="text-xs text-primary hover:underline"
+                      className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
                     >
-                      {fullTextExpanded ? '접기' : '자세히 보기'}
+                      뉴스 원문 · Full Contents
+                      <span className="text-primary">{fullTextExpanded ? '접기' : '펼치기'}</span>
                     </button>
-                  )}
-                </div>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {fullTextExpanded ? displayNews.detail : contentPreview}
-                  {!fullTextExpanded && hasMore && '...'}
-                </p>
-              </div>
-
-              {entities.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">관련 공급망 생산지</span>
-                  <div className="flex flex-wrap gap-2">
-                    {entities.map((e) => (
-                      <Link
-                        key={e!.id}
-                        href={`/explorer?entity=${e!.id}`}
-                        onClick={onClose}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-                      >
-                        <Building2 className="size-3" />
-                        {e!.nameKo}
-                      </Link>
-                    ))}
+                    <a
+                      href={displayNews.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    >
+                      원문 보기 <ExternalLink className="size-3.5" />
+                    </a>
                   </div>
+                  {fullTextExpanded && (
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                      {displayNews.detail}
+                    </p>
+                  )}
                 </div>
               )}
 
-              <div className="flex flex-col gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  키워드
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {displayNews.keywords.map((k) => (
-                    <span
-                      key={k}
-                      className="inline-flex items-center gap-1 rounded border border-border bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
-                    >
-                      #{k}
-                    </span>
-                  ))}
+              {/* 3. AI Risk Core Insight — 판단 근거를 섹션명 없이 바로 표기 */}
+              {displayNews.riskJustification && (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">AI Risk Core Insight</span>
+                  <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm leading-relaxed text-foreground">
+                    {displayNews.riskJustification}
+                  </p>
                 </div>
-              </div>
+              )}
 
+              {/* 4. 유관 태그 */}
               {displayNews.tagRefs && displayNews.tagRefs.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -203,7 +193,7 @@ export function NewsOverlay({
                           key={t.tagId}
                           onClick={() => handleTagClick(t.tagId)}
                           className={cn(
-                            'inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs font-medium transition-colors',
+                            'inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors',
                             openTagId === t.tagId
                               ? 'border-primary bg-primary/20 text-primary'
                               : 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/20',
@@ -214,7 +204,7 @@ export function NewsOverlay({
                       ) : (
                         <span
                           key={t.tagId}
-                          className="inline-flex items-center gap-1 rounded border border-border bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
+                          className="inline-flex items-center gap-1 rounded border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
                         >
                           {t.tagName}
                         </span>
@@ -234,9 +224,9 @@ export function NewsOverlay({
                           tagChain.rawMaterials.length > 0) ? (
                         <div className="flex flex-col gap-3">
                           <SupplyChainGroup title="협력사" icon="factory" items={tagChain.suppliers} link onClose={onClose} />
+                          <SupplyChainGroup title="자재" icon="package" items={tagChain.materials} showCode />
                           <SupplyChainGroup title="생산지" icon="building" items={tagChain.sites} link onClose={onClose} />
-                          <SupplyChainGroup title="자재" icon="package" items={tagChain.materials} />
-                          <SupplyChainGroup title="원재료(소재)" icon="layers" items={tagChain.rawMaterials} />
+                          <SupplyChainGroup title="원재료(소재)" icon="layers" items={tagChain.rawMaterials} showCode />
                         </div>
                       ) : (
                         <span className="text-xs text-muted-foreground">관련 공급망 정보가 없습니다.</span>
@@ -252,7 +242,7 @@ export function NewsOverlay({
                       {displayNews.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1 rounded border border-border bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
+                          className="inline-flex items-center gap-1 rounded border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
                         >
                           {tag}
                         </span>
@@ -262,66 +252,41 @@ export function NewsOverlay({
                 )
               )}
 
-              {/* ══ AI RISK CORE INSIGHTS ══ */}
-              <div className="flex flex-col gap-4 border-t border-border pt-5">
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex w-fit items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1">
-                    <span className="size-1.5 rounded-full bg-primary" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">AI Risk Core Insights</span>
-                  </div>
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    뉴스 자체의 리스크 여부, DS 반도체 공급망 DB와의 관련성, 시급성 기반으로 AI가 분석한 인사이트
-                  </p>
-                </div>
-
-                {/* AI 리스크 평가 — 4단계 게이지 (박스 없이) */}
+              {/* 5. 관련 생산지 */}
+              {entities.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">AI 리스크 평가</span>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn('group relative rounded-full border px-3 py-1 text-sm font-bold', c?.border, c?.bg)}
-                      title={`정확한 점수: ${displayNews.impactScore}`}
-                    >
-                      <span className={cn('cursor-help', c?.text)}>{SEVERITY_META[displayNews.severity].en}</span>
-                      <span className={cn('absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100', 'pointer-events-none')}>
-                        {displayNews.impactScore} / 100
-                      </span>
-                    </div>
-                    {/* 4단계 게이지 바 — severity 경계(20/60/85)와 정합 (LOW/MEDIUM/HIGH/CRITICAL = 1/2/3/4칸) */}
-                    <div className="flex flex-1 gap-0.5">
-                      {[0, 20, 60, 85].map((threshold) => {
-                        const isActive = displayNews.impactScore > threshold
-                        let bgClass = 'bg-muted'
-                        if (isActive) {
-                          if (displayNews.severity === 'high') bgClass = 'bg-risk-high'
-                          else if (displayNews.severity === 'medium') bgClass = 'bg-risk-medium'
-                          else bgClass = 'bg-risk-low'
-                        }
-                        return (
-                          <div
-                            key={threshold}
-                            className={cn('h-2 flex-1 rounded-sm transition-all', bgClass)}
-                          />
-                        )
-                      })}
-                    </div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">관련 공급망 생산지</span>
+                  <div className="flex flex-wrap gap-2">
+                    {entities.map((e) => (
+                      <Link
+                        key={e!.id}
+                        href={`/explorer?entity=${e!.id}`}
+                        onClick={onClose}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                      >
+                        <Building2 className="size-3" />
+                        {e!.nameKo}
+                      </Link>
+                    ))}
                   </div>
                 </div>
+              )}
 
-                {/* AI 판단 근거 */}
-                {displayNews.riskJustification && (
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">AI 판단 근거</span>
-                    <ul className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
-                      {displayNews.riskJustification.split(/\n+|(?<=[.!?。])\s+/).filter((s) => s.trim()).map((line, i) => (
-                        <li key={i} className="flex gap-2 text-sm leading-relaxed text-foreground">
-                          <span className="mt-1.5 size-1 shrink-0 rounded-full bg-muted-foreground" />
-                          <span>{line.trim()}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+              {/* 6. 키워드 */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  키워드
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {displayNews.keywords.map((k) => (
+                    <span
+                      key={k}
+                      className="inline-flex items-center gap-1 rounded border border-border bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
+                    >
+                      #{k}
+                    </span>
+                  ))}
+                </div>
               </div>
             </>
           )}
@@ -329,15 +294,7 @@ export function NewsOverlay({
 
         {/* Footer actions */}
         {displayNews && (
-          <div className="flex shrink-0 items-center justify-between border-t border-border bg-card p-4">
-            <a
-              href={displayNews.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              원문 보기 <ExternalLink className="size-3.5" />
-            </a>
+          <div className="flex shrink-0 items-center justify-end border-t border-border bg-card p-4">
             <Link
               href={`/reporting?news=${displayNews.id}`}
               onClick={onClose}
@@ -353,20 +310,53 @@ export function NewsOverlay({
 }
 
 /**
- * 태그 공급망 정보 그룹 (협력사/거점/자재/원재료). 빈 배열이면 렌더 안 함.
+ * 요약(summary)을 불렛 리스트로 렌더.
+ * "- ", "• ", "* " 로 시작하는 줄을 항목으로 파싱해 마커를 스타일로 대체한다.
+ * 불렛이 하나도 없으면 일반 문단으로 폴백(whitespace-pre-line).
+ */
+function SummaryBullets({ summary }: { summary: string }) {
+  const lines = (summary || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+  const bullets = lines
+    .filter((l) => /^[-•*]\s*/.test(l))
+    .map((l) => l.replace(/^[-•*]\s*/, ''))
+
+  if (bullets.length === 0) {
+    return <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{summary}</p>
+  }
+
+  return (
+    <ul className="flex flex-col gap-1.5">
+      {bullets.map((b, i) => (
+        <li key={i} className="flex gap-2 text-sm leading-relaxed text-foreground">
+          <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-foreground" />
+          <span className="flex-1">{b}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/**
+ * 태그 공급망 정보 그룹 (협력사/생산지/자재/원재료). 빈 배열이면 렌더 안 함.
  * link=true 이면 항목을 explorer 거점 상세로 이동하는 Link 로, 아니면 정적 배지로 표시.
+ * showCode=true 이면 명칭 대신 코드(material_code/raw_material_code)로 표기(자재/원재료).
  */
 function SupplyChainGroup({
   title,
   icon,
   items,
   link = false,
+  showCode = false,
   onClose,
 }: {
   title: string
   icon: 'factory' | 'building' | 'package' | 'layers'
   items: SupplyRef[]
   link?: boolean
+  showCode?: boolean
   onClose?: () => void
 }) {
   if (!items || items.length === 0) return null
@@ -386,7 +376,7 @@ function SupplyChainGroup({
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
             >
               <Icon className="size-3" />
-              {it.nameKo}
+              {showCode ? it.code : it.nameKo}
             </Link>
           ) : (
             <span
@@ -394,7 +384,7 @@ function SupplyChainGroup({
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground"
             >
               <Icon className="size-3" />
-              {it.nameKo}
+              {showCode ? it.code : it.nameKo}
             </span>
           ),
         )}

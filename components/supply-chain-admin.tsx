@@ -20,40 +20,38 @@ type TabKey = (typeof TABS)[number]
 
 const RAW_MATERIAL_COLUMNS: Column<RawMaterialRow>[] = [
   { key: 'no', label: 'no', className: 'whitespace-nowrap' },
-  { key: 'raw_material_code', label: 'raw_material_code', className: 'whitespace-nowrap' },
-  { key: 'name_kor', label: 'name_kor' },
-  { key: 'name_eng', label: 'name_eng' },
-  { key: 'raw_material_type', label: 'raw_material_type', filterable: true },
+  { key: 'raw_material_code', label: '원자재 코드', className: 'whitespace-nowrap' },
+  { key: 'name_kor', label: '원자재 명칭 (KR)' },
+  { key: 'name_eng', label: '원자재 명칭 (EN)' },
+  { key: 'raw_material_type', label: '원자재 유형', filterable: true },
 ]
 
 const MATERIAL_COLUMNS: Column<MaterialRow>[] = [
   { key: 'no', label: 'no', className: 'whitespace-nowrap' },
-  { key: 'material_code', label: 'material_code', className: 'whitespace-nowrap' },
-  { key: 'name_kor', label: 'name_kor' },
-  { key: 'name_eng', label: 'name_eng' },
-  { key: 'material_type', label: 'material_type', filterable: true },
+  { key: 'material_code', label: '자재 코드', className: 'whitespace-nowrap' },
+  { key: 'name_kor', label: '자재 명칭 (KR)' },
+  { key: 'name_eng', label: '자재 명칭 (EN)' },
+  { key: 'material_type', label: '자재 유형', filterable: true },
 ]
 
 const SITE_COLUMNS: Column<SiteRow>[] = [
   { key: 'no', label: 'no', className: 'whitespace-nowrap' },
-  { key: 'site_code', label: 'site_code', className: 'whitespace-nowrap' },
-  { key: 'supplier_code', label: 'supplier_code', className: 'whitespace-nowrap' },
-  { key: 'name', label: 'name' },
-  { key: 'country', label: 'country', filterable: true, className: 'whitespace-nowrap' },
-  { key: 'region', label: 'region', filterable: true, className: 'whitespace-nowrap' },
-  { key: 'latitude', label: 'latitude', className: 'whitespace-nowrap' },
-  { key: 'longitude', label: 'longitude', className: 'whitespace-nowrap' },
+  { key: 'site_code', label: '생산지 코드', className: 'whitespace-nowrap' },
+  { key: 'supplier_code', label: '협력사 코드', className: 'whitespace-nowrap' },
+  { key: 'name', label: '생산지 명칭' },
+  { key: 'country', label: '국가', filterable: true, className: 'whitespace-nowrap' },
+  { key: 'latitude', label: '위도', className: 'whitespace-nowrap' },
+  { key: 'longitude', label: '경도', className: 'whitespace-nowrap' },
 ]
 
 const SUPPLIER_COLUMNS: Column<SupplierRow>[] = [
   { key: 'no', label: 'no', className: 'whitespace-nowrap' },
-  { key: 'supplier_code', label: 'supplier_code', className: 'whitespace-nowrap' },
-  { key: 'name_kor', label: 'name_kor' },
-  { key: 'name_eng', label: 'name_eng' },
-  { key: 'country', label: 'country', filterable: true, className: 'whitespace-nowrap' },
-  { key: 'region', label: 'region', filterable: true, className: 'whitespace-nowrap' },
-  { key: 'latitude', label: 'latitude', className: 'whitespace-nowrap' },
-  { key: 'longitude', label: 'longitude', className: 'whitespace-nowrap' },
+  { key: 'supplier_code', label: '협력사 코드', className: 'whitespace-nowrap' },
+  { key: 'name_kor', label: '협력사 명칭 (KR)' },
+  { key: 'name_eng', label: '협력사 명칭 (EN)' },
+  { key: 'country', label: '국가', filterable: true, className: 'whitespace-nowrap' },
+  { key: 'latitude', label: '위도', className: 'whitespace-nowrap' },
+  { key: 'longitude', label: '경도', className: 'whitespace-nowrap' },
 ]
 
 const TAB_META: { key: TabKey; label: string; icon: typeof Boxes; table: string }[] = [

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from '@/components/theme-toggle'
 import {
-  Newspaper, Globe2, FileText, Settings, ChevronDown,
+  Newspaper, Globe2, Settings, ChevronDown,
   Sparkles, KeyRound, Tag, Boxes, Package, MapPin, Factory,
 } from 'lucide-react'
 import {
@@ -28,7 +28,6 @@ type NavItem =
 const NAV: NavItem[] = [
   { href: '/', label: 'Daily News', icon: Newspaper },
   { href: '/explorer', label: 'Explorer MAP', icon: Globe2 },
-  { href: '/reporting', label: 'Reporting', icon: FileText },
   {
     label: '관리자',
     icon: Settings,

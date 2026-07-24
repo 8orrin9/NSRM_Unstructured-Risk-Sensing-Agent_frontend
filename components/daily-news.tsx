@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { fetchNews, fetchNewsGroups, fetchNewsStats, fetchEntities } from '@/lib/api-client'
 import { buildFeed } from '@/lib/feed'
-import { RISK_CATEGORIES, RISK_FACTORS, SEVERITY_META, CATEGORY_COLORS, severityClasses } from '@/lib/risk-config'
+import { RISK_CATEGORIES, RISK_FACTORS, SEVERITY_META, severityClasses } from '@/lib/risk-config'
 import { severityToKorean } from '@/lib/severity'
 import type { FeedEntry, NewsItem, RiskCategory, RiskFactor, ResolvedGroup, Severity, NewsGroup, SupplyEntity } from '@/lib/types'
 import { formatDate, formatDateTime } from '@/lib/format'
@@ -23,12 +23,35 @@ import {
   X,
   Search,
   CalendarDays,
+  Leaf,
+  Factory,
+  Boxes,
+  ShieldAlert,
+  Landmark,
+  Lightbulb,
+  CloudRain,
+  Scale,
+  Truck,
+  type LucideIcon,
 } from 'lucide-react'
 
 const SEVERITIES: Severity[] = ['high', 'medium', 'low']
 const PAGE_SIZE = 5
 const GROUP_INITIAL = 6 // Risk Groups 초기 노출 수
 const GROUP_STEP = 3 // 더보기 클릭당 추가 노출 수
+
+// 대분류 카드 명칭 좌측 아이콘 (factor 키 기준)
+const FACTOR_ICONS: Record<RiskFactor, LucideIcon> = {
+  esg_compliance: Leaf,
+  supply_singlesource: Factory,
+  rawmaterial_critical: Boxes,
+  cyber_data: ShieldAlert,
+  financial_credit: Landmark,
+  tech_ip: Lightbulb,
+  disaster_climate: CloudRain,
+  geopolitical_regulatory: Scale,
+  logistics_infra: Truck,
+}
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -165,6 +188,8 @@ export function DailyNews() {
   function filteredFactorNews(factor: RiskFactor): NewsItem[] {
     // Risk Factor Monitor는 전체 뉴스를 사용 (국내 한정 해제)
     let items = newsForFactor(factor, NEWS)
+    // 시연 요청: "홈플러스 파산 손놓은 MBK…" 뉴스 비가시화
+    items = items.filter((n) => !n.title.includes('홈플러스 파산 손놓은 MBK'))
     // 상단 심각도 필터를 Risk Factor Monitor에도 적용
     if (sevFilter !== 'all') items = items.filter((n) => n.severity === sevFilter)
     if (factorDateFrom) items = items.filter((n) => isoDate(n.publishedAt) >= factorDateFrom)
@@ -406,6 +431,8 @@ export function DailyNews() {
         )}
 
         {/* ── Individual News (PAGE_SIZE + load more) ── */}
+        {/* 시연 요청: Individual News 섹션 비가시화 */}
+        {false && (
         <section className="flex flex-col gap-5">
           <div className="flex flex-wrap items-baseline gap-3">
             <h2 className="text-xl font-bold tracking-tight text-foreground">Individual News</h2>
@@ -487,6 +514,7 @@ export function DailyNews() {
             )}
           </div>
         </section>
+        )}
 
       </div>{/* end Core Insights navy container */}
 
@@ -522,9 +550,8 @@ function FactorCard({
 }) {
   const [showAll, setShowAll] = useState(false)
 
-  // 카테고리 색상 적용
-  const primaryCategory = RISK_FACTORS[factor].categories[0] as RiskCategory
-  const categoryColor = CATEGORY_COLORS[primaryCategory]
+  // 카드 명칭 좌측 아이콘
+  const FactorIcon = FACTOR_ICONS[factor]
 
   // 최근 10개만 표시 (pub_date 기준 정렬은 이미 filteredFactorNews에서 처리됨)
   const displayItems = showAll ? items : items.slice(0, 10)
@@ -533,18 +560,21 @@ function FactorCard({
   return (
     <article
       className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-md"
-      style={{ borderTopWidth: 3, borderTopColor: `var(--${categoryColor.token})` }}
+      style={{ borderTopWidth: 3, borderTopColor: 'var(--primary)' }}
     >
       <button
         onClick={onToggle}
         className="flex w-full items-center gap-3 p-3.5 text-left transition-colors hover:bg-muted/50"
       >
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <FactorIcon className="size-[18px]" />
+        </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-[11px] font-medium text-muted-foreground">{meta.en}</span>
           <span className="text-sm font-bold text-foreground">{meta.ko}</span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="text-[11px] font-semibold text-muted-foreground">{items.length}건</span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">{items.length}건</span>
           <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
         </div>
       </button>
@@ -555,22 +585,18 @@ function FactorCard({
             {items.length === 0 && (
               <p className="px-2 py-3 text-center text-xs text-muted-foreground">해당 기간 뉴스 없음</p>
             )}
-            {displayItems.map((n) => {
-              const nc = severityClasses(n.severity)
-              return (
+            {displayItems.map((n) => (
                 <button
                   key={n.id}
                   onClick={() => onOpenOverlay(n)}
                   className="flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-muted/60"
                 >
-                  <span className={cn('mt-1.5 size-2 shrink-0 rounded-full', nc.dot)} />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="text-[11px] text-muted-foreground">{formatDateTime(n.publishedAt)} · {n.source}</span>
                     <span className="line-clamp-2 text-xs font-medium leading-snug text-foreground">{n.title}</span>
                   </div>
                 </button>
-              )
-            })}
+            ))}
           </div>
           {hasMore && (
             <button

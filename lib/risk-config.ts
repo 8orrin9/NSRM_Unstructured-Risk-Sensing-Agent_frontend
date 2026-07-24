@@ -48,47 +48,29 @@ export function severityClasses(sev: Severity) {
 }
 
 export const RISK_FACTORS: Record<RiskFactor, RiskFactorMeta> = {
-  geopolitical_regulatory: {
-    id: 'geopolitical_regulatory',
-    ko: '지정학 & 규제',
-    en: 'Geopolitical & Regulatory',
-    categories: ['geopolitical'],
+  esg_compliance: {
+    id: 'esg_compliance',
+    ko: 'ESG',
+    en: 'ESG & Compliance',
+    categories: ['esg'],
   },
   supply_singlesource: {
     id: 'supply_singlesource',
-    ko: '공급 집중 & 단일소싱',
+    ko: '협력사 동향',
     en: 'Supply Concentration & Single Sourcing',
     categories: ['supply'],
   },
   rawmaterial_critical: {
     id: 'rawmaterial_critical',
-    ko: '원자재 & 희소물질',
+    ko: '원자재',
     en: 'Raw Material & Critical Minerals',
     categories: ['material'],
   },
-  tech_ip: {
-    id: 'tech_ip',
-    ko: '기술 & 지식재산',
-    en: 'Technology & IP',
-    categories: ['tech'],
-  },
-  logistics_infra: {
-    id: 'logistics_infra',
-    ko: '물류 & 인프라',
-    en: 'Logistics & Infrastructure',
-    categories: ['logistics'],
-  },
   cyber_data: {
     id: 'cyber_data',
-    ko: '사이버 & 데이터',
+    ko: '사이버',
     en: 'Cyber & Data',
     categories: ['cyber'],
-  },
-  esg_compliance: {
-    id: 'esg_compliance',
-    ko: 'ESG & Compliance',
-    en: 'ESG & Compliance',
-    categories: ['esg'],
   },
   financial_credit: {
     id: 'financial_credit',
@@ -96,11 +78,29 @@ export const RISK_FACTORS: Record<RiskFactor, RiskFactorMeta> = {
     en: 'Financial & Credit',
     categories: ['financial'],
   },
+  tech_ip: {
+    id: 'tech_ip',
+    ko: '기술 & 지식재산권',
+    en: 'Technology & IP',
+    categories: ['tech'],
+  },
   disaster_climate: {
     id: 'disaster_climate',
-    ko: '자연재해 & 기후',
+    ko: '자연재해',
     en: 'Natural Disaster & Climate',
     categories: ['disaster'],
+  },
+  geopolitical_regulatory: {
+    id: 'geopolitical_regulatory',
+    ko: '지정학 & 규제',
+    en: 'Geopolitical & Regulatory',
+    categories: ['geopolitical'],
+  },
+  logistics_infra: {
+    id: 'logistics_infra',
+    ko: '물류',
+    en: 'Logistics & Infrastructure',
+    categories: ['logistics'],
   },
 }
 

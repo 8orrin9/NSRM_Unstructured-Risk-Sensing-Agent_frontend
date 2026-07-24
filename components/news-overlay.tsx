@@ -19,6 +19,14 @@ import {
   Layers,
 } from 'lucide-react'
 
+// AI Core Insight 텍스트를 문장 단위로 분리 (불렛포인트 표기용)
+function splitSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.。!?])\s+|\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 /**
  * 뉴스 상세 오버레이 컴포넌트
  * Daily News와 Explorer에서 공통으로 사용
@@ -169,13 +177,18 @@ export function NewsOverlay({
                 </div>
               )}
 
-              {/* 3. AI Risk Core Insight — 판단 근거를 섹션명 없이 바로 표기 */}
+              {/* 3. AI Risk Core Insight — 판단 근거를 문장별 불렛포인트로 표기 */}
               {displayNews.riskJustification && (
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">AI Risk Core Insight</span>
-                  <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm leading-relaxed text-foreground">
-                    {displayNews.riskJustification}
-                  </p>
+                  <ul className="flex flex-col gap-2 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm leading-relaxed text-foreground">
+                    {splitSentences(displayNews.riskJustification).map((sentence, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+                        <span>{sentence}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 

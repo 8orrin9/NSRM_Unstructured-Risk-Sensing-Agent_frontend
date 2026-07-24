@@ -226,7 +226,7 @@ export function DailyNews() {
             총 수집 <span className="font-bold tabular-nums text-foreground">{NEWS.length}</span>건
           </span>
         </div>
-        <div className="grid grid-cols-2 divide-x divide-border border-border sm:grid-cols-4">
+        <div className="grid grid-cols-3 divide-x divide-border border-border">
           {SEVERITIES.map((s) => {
             const c = severityClasses(s)
             return (

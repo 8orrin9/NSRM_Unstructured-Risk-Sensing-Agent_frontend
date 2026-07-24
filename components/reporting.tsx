@@ -37,7 +37,7 @@ import {
 
 const TONES = ['간결한 보고체', '상세 분석형', '경영진 브리핑', '실무 대응 중심']
 
-export function Reporting() {
+export function Reporting({ initialGroupId, embedded }: { initialGroupId?: string; embedded?: boolean } = {}) {
   const params = useSearchParams()
   // API 데이터 상태
   const [NEWS, setNEWS] = useState<NewsItem[]>([])
@@ -92,6 +92,18 @@ export function Reporting() {
     return buildFeed(NEWS, NEWS_GROUPS)
   }, [NEWS, NEWS_GROUPS])
 
+  // 모달로 특정 그룹을 열었을 때: 해당 그룹의 뉴스를 자동 선택(마운트 1회)
+  const [autoSelected, setAutoSelected] = useState(false)
+  useEffect(() => {
+    if (autoSelected || !initialGroupId || feed.length === 0) return
+    const entry = feed.find((e) => e.kind === 'group' && e.group.id === initialGroupId)
+    if (entry && entry.kind === 'group') {
+      const ids = entry.group.items.map((n) => n.id)
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...ids])))
+      setAutoSelected(true)
+    }
+  }, [autoSelected, initialGroupId, feed])
+
   const filteredFeed = useMemo(() => {
     let result = feed
 
@@ -127,13 +139,16 @@ export function Reporting() {
   // 그룹을 상단으로 정렬 (Array.sort는 안정 정렬이므로 그룹/개별 각 그룹 내부의 latestAt 순서는 유지)
   const groupFirst = (a: FeedEntry, b: FeedEntry) =>
     (a.kind === 'group' ? 0 : 1) - (b.kind === 'group' ? 0 : 1)
-  const riskEntries = useMemo(
-    () =>
-      filteredFeed
-        .filter((e) => (e.kind === 'group' ? e.group.isRisk : isRiskNews(e.news)))
-        .sort(groupFirst),
-    [filteredFeed],
-  )
+  const riskEntries = useMemo(() => {
+    const risk = filteredFeed
+      .filter((e) => (e.kind === 'group' ? e.group.isRisk : isRiskNews(e.news)))
+      .sort(groupFirst)
+    if (!initialGroupId) return risk
+    // 모달로 연 그룹을 목록 최상단으로 배치
+    const idx = risk.findIndex((e) => e.kind === 'group' && e.group.id === initialGroupId)
+    if (idx <= 0) return risk
+    return [risk[idx], ...risk.slice(0, idx), ...risk.slice(idx + 1)]
+  }, [filteredFeed, initialGroupId])
   const normalEntries = useMemo(
     () =>
       filteredFeed
@@ -179,6 +194,7 @@ export function Reporting() {
         recipient,
         tone,
         instruction,
+        groupId: initialGroupId,
       })
       if (!res.ok || !res.body) throw new Error(await res.text() || '생성 실패')
       const reader = res.body.getReader()
@@ -215,14 +231,16 @@ export function Reporting() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 text-primary">
-          <FileText className="size-4" />
-          <span className="text-xs font-semibold uppercase tracking-wide">Reporting</span>
+      {!embedded && (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-primary">
+            <FileText className="size-4" />
+            <span className="text-xs font-semibold uppercase tracking-wide">Reporting</span>
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">리스크 리포트 작성 · 발행</h1>
+          <p className="text-sm text-muted-foreground">뉴스를 선택하고 AI 초안을 생성한 뒤, 편집하여 담당자에게 전송하세요.</p>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">리스크 리포트 작성 · 발행</h1>
-        <p className="text-sm text-muted-foreground">뉴스를 선택하고 AI 초안을 생성한 뒤, 편집하여 담당자에게 전송하세요.</p>
-      </div>
+      )}
 
       {/* 2-column layout: left=news selection, right=editor */}
       <div className="grid gap-4 lg:grid-cols-[340px_1fr]" style={{ minHeight: 720 }}>

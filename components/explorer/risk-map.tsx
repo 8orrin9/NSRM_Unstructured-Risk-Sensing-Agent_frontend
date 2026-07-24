@@ -6,12 +6,12 @@ import L from 'leaflet'
 import type { SupplyEntity } from '@/lib/types'
 import { SEVERITY_HEX } from '@/lib/risk-config'
 
-function markerIcon(entity: SupplyEntity & { maxSeverity?: 'critical' | 'high' | 'medium' | 'low' }, selected: boolean, highlighted: boolean) {
+function markerIcon(entity: SupplyEntity & { maxSeverity?: 'high' | 'medium' | 'low' }, selected: boolean, highlighted: boolean) {
   // 관련 뉴스의 최고 심각도로 색상 결정
   const sev = entity.maxSeverity || 'low'
   const color = SEVERITY_HEX[sev]
   const size = entity.type === 'site' ? 16 : 13
-  const pulse = (sev === 'critical' || sev === 'high') ? 'risk-marker-pulse' : ''
+  const pulse = (sev === 'high') ? 'risk-marker-pulse' : ''
   const extraStyle = selected
     ? 'box-shadow:0 0 0 5px rgba(26,47,138,0.5),0 0 12px rgba(26,47,138,0.3);transform:scale(1.15);'
     : highlighted
@@ -72,14 +72,14 @@ export default function RiskMap({
 
   // Calculate news count and max severity for each entity
   const entitiesWithCounts = useMemo(() => {
-    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 }
+    const severityOrder = { high: 0, medium: 1, low: 2 }
 
     const result = entities.map(entity => {
       const relatedNews = allNews.filter(news => news.relatedEntityIds.includes(entity.id))
       const activeRiskIds = relatedNews.map(news => news.id)
 
       // 관련 뉴스 중 가장 높은 심각도 찾기
-      let maxSeverity: 'critical' | 'high' | 'medium' | 'low' = 'low'
+      let maxSeverity: 'high' | 'medium' | 'low' = 'low'
       relatedNews.forEach(news => {
         if (severityOrder[news.severity] < severityOrder[maxSeverity]) {
           maxSeverity = news.severity

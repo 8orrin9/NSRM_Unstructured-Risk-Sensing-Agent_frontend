@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { fetchEntityNews } from '@/lib/api-client'
-import { formatTime } from '@/lib/format'
+import { formatDateTime } from '@/lib/format'
 import { severityClasses } from '@/lib/risk-config'
 import { SeverityBadge, CategoryBadge } from '@/components/risk-badges'
 import { cn } from '@/lib/utils'
@@ -128,7 +128,7 @@ export function NewsPanel({
                   </p>
                 ) : news.length === 0 ? (
                   <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                    현재 이 거점에 연결된 활성 리스크가 없습니다.
+                    현재 이 생산지에 연결된 활성 리스크가 없습니다.
                   </p>
                 ) : (
                   <div className="flex flex-col gap-2.5">
@@ -171,7 +171,7 @@ function PanelNewsCard({
         <div className="flex items-center gap-1.5">
           <CategoryBadge category={news.category} />
           <span className="text-xs text-muted-foreground">
-            {news.source} · {formatTime(news.publishedAt)}
+            {news.source} · {formatDateTime(news.publishedAt)}
           </span>
           <SeverityBadge severity={news.severity} format="en" className="ml-auto shrink-0" />
         </div>

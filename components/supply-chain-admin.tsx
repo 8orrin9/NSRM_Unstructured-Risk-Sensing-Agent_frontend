@@ -59,7 +59,7 @@ const SUPPLIER_COLUMNS: Column<SupplierRow>[] = [
 const TAB_META: { key: TabKey; label: string; icon: typeof Boxes; table: string }[] = [
   { key: 'raw-materials', label: '원자재', icon: Boxes, table: 'RAW_MATERIAL_MASTER' },
   { key: 'materials', label: '자재', icon: Package, table: 'MATERIAL_MASTER' },
-  { key: 'sites', label: '거점', icon: MapPin, table: 'SITE_MASTER' },
+  { key: 'sites', label: '생산지', icon: MapPin, table: 'SITE_MASTER' },
   { key: 'suppliers', label: '협력사', icon: Factory, table: 'SUPPLIER_MASTER' },
 ]
 
@@ -116,7 +116,7 @@ export function SupplyChainAdmin() {
           </div>
           <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">공급망 Database</h1>
           <p className="text-sm text-muted-foreground">
-            공급망 원천 마스터 데이터(원자재·자재·거점·협력사)를 조회합니다. 조회 전용입니다.
+            공급망 원천 마스터 데이터(원자재·자재·생산지·협력사)를 조회합니다. 조회 전용입니다.
           </p>
         </div>
       </section>

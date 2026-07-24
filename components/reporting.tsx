@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { fetchNews, fetchNewsGroups, generateReport } from '@/lib/api-client'
 import { buildFeed, isRiskNews } from '@/lib/feed'
 import { getEntity } from '@/lib/entities'
-import { formatTime } from '@/lib/format'
+import { formatDateTime } from '@/lib/format'
 import { severityClasses } from '@/lib/risk-config'
 import { severityToKorean } from '@/lib/severity'
 import type { FeedEntry, NewsItem, NewsGroup, ResolvedGroup } from '@/lib/types'
@@ -496,7 +496,7 @@ function NewsDetailPanel({ news }: { news: NewsItem }) {
 
       {entities.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">관련 공급망 거점</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">관련 공급망 생산지</span>
           <div className="flex flex-wrap gap-1.5">
             {entities.map((e) => (
               <span
@@ -713,7 +713,7 @@ function NewsSelectItem({
         <span className="flex items-center gap-1.5">
           <span className={cn('size-1.5 rounded-full', c.dot)} />
           {!nested && <CategoryBadge category={news.category} />}
-          <span className="ml-auto text-[10px] text-muted-foreground">{formatTime(news.publishedAt)}</span>
+          <span className="ml-auto text-[10px] text-muted-foreground">{formatDateTime(news.publishedAt)}</span>
         </span>
         <span className={cn('text-xs font-medium leading-snug', previewing ? 'text-primary' : 'text-foreground')}>
           {news.title}

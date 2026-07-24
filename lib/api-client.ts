@@ -22,7 +22,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8007/a
  * 뉴스 목록 조회
  */
 export async function fetchNews(params?: {
-  severity?: 'critical' | 'high' | 'medium' | 'low'
+  severity?: 'high' | 'medium' | 'low'
   risk_factor?: string
   limit?: number
   offset?: number
@@ -218,7 +218,6 @@ export async function fetchSuppliers(): Promise<SupplierRow[]> {
  */
 export async function fetchNewsStats(): Promise<{
   total: number
-  critical: number
   high: number
   medium: number
   low: number

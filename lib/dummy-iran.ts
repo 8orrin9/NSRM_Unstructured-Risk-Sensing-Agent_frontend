@@ -22,7 +22,7 @@ export const DUMMY_IRAN_ENTITIES: SupplyEntity[] = [
     city: 'Strait of Hormuz',
     lat: 26.57,
     lng: 56.25,
-    criticality: 'critical',
+    criticality: 'high',
     status: 'disrupted',
     products: ['원유 해상 수송로', 'LNG 수송로', '컨테이너 항로'],
     activeRiskIds: ['iran-01', 'iran-02', 'iran-03'],
@@ -70,7 +70,7 @@ export const DUMMY_IRAN_NEWS: NewsItem[] = [
     source: 'Reuters',
     publishedAt: '2026-07-19T08:20:00+09:00',
     category: 'geopolitical',
-    severity: 'critical',
+    severity: 'high',
     summary:
       '이란과 이스라엘 간 군사 충돌이 전면전 양상으로 확대되며 중동 전역의 지정학 리스크가 급격히 고조되고 있다. 주요국이 자국민 대피령을 발령했다.',
     detail:
@@ -97,7 +97,7 @@ export const DUMMY_IRAN_NEWS: NewsItem[] = [
     source: 'Bloomberg',
     publishedAt: '2026-07-20T10:05:00+09:00',
     category: 'logistics',
-    severity: 'critical',
+    severity: 'high',
     summary:
       '이란이 호르무즈 해협 봉쇄를 공식 위협하면서 전 세계 원유 수송의 20%가 지나는 요충지가 마비될 위기에 놓였다. 해상 운임과 보험료가 급등하고 있다.',
     detail:

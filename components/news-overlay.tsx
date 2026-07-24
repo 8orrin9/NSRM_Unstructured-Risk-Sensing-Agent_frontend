@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { fetchNewsById, fetchEntities, fetchTagSupplyChain } from '@/lib/api-client'
-import { formatTime } from '@/lib/format'
+import { formatDateTime } from '@/lib/format'
 import { severityClasses, SEVERITY_META } from '@/lib/risk-config'
 import { SeverityBadge, CategoryBadge } from '@/components/risk-badges'
 import { cn } from '@/lib/utils'
@@ -112,7 +112,7 @@ export function NewsOverlay({
           <div className="flex flex-wrap items-center gap-2">
             {displayNews && <CategoryBadge category={displayNews.category} />}
             <span className="text-xs text-muted-foreground">
-              {displayNews?.source} · {displayNews ? formatTime(displayNews.publishedAt) : ''}
+              {displayNews?.source} · {displayNews ? formatDateTime(displayNews.publishedAt) : ''}
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -157,7 +157,7 @@ export function NewsOverlay({
 
               {entities.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">관련 공급망 거점</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">관련 공급망 생산지</span>
                   <div className="flex flex-wrap gap-2">
                     {entities.map((e) => (
                       <Link
@@ -234,7 +234,7 @@ export function NewsOverlay({
                           tagChain.rawMaterials.length > 0) ? (
                         <div className="flex flex-col gap-3">
                           <SupplyChainGroup title="협력사" icon="factory" items={tagChain.suppliers} link onClose={onClose} />
-                          <SupplyChainGroup title="거점" icon="building" items={tagChain.sites} link onClose={onClose} />
+                          <SupplyChainGroup title="생산지" icon="building" items={tagChain.sites} link onClose={onClose} />
                           <SupplyChainGroup title="자재" icon="package" items={tagChain.materials} />
                           <SupplyChainGroup title="원재료(소재)" icon="layers" items={tagChain.rawMaterials} />
                         </div>
@@ -293,8 +293,7 @@ export function NewsOverlay({
                         const isActive = displayNews.impactScore > threshold
                         let bgClass = 'bg-muted'
                         if (isActive) {
-                          if (displayNews.severity === 'critical') bgClass = 'bg-risk-critical'
-                          else if (displayNews.severity === 'high') bgClass = 'bg-risk-high'
+                          if (displayNews.severity === 'high') bgClass = 'bg-risk-high'
                           else if (displayNews.severity === 'medium') bgClass = 'bg-risk-medium'
                           else bgClass = 'bg-risk-low'
                         }

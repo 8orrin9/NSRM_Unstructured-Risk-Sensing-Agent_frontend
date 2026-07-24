@@ -7,7 +7,7 @@ import type { AdminGroup, NewsItem } from '@/lib/types'
 import { fetchAdminGroups, saveAdminGroupDisplay, fetchNews } from '@/lib/api-client'
 import { NewsOverlay } from '@/components/news-overlay'
 import { SeverityBadge } from '@/components/risk-badges'
-import { formatTime } from '@/lib/format'
+import { formatDateTime } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
@@ -175,7 +175,7 @@ export function InsightsAdmin() {
                               {n.title}
                             </span>
                             <span className="shrink-0 text-xs text-muted-foreground">
-                              {n.source} · {formatTime(n.publishedAt)}
+                              {n.source} · {formatDateTime(n.publishedAt)}
                             </span>
                           </button>
                         ))

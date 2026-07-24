@@ -47,7 +47,7 @@ const NAV: NavItem[] = [
         items: [
           { href: '/admin/supply-chain?tab=raw-materials', label: '원자재', desc: 'RAW_MATERIAL_MASTER', icon: Boxes },
           { href: '/admin/supply-chain?tab=materials', label: '자재', desc: 'MATERIAL_MASTER', icon: Package },
-          { href: '/admin/supply-chain?tab=sites', label: '거점', desc: 'SITE_MASTER', icon: MapPin },
+          { href: '/admin/supply-chain?tab=sites', label: '생산지', desc: 'SITE_MASTER', icon: MapPin },
           { href: '/admin/supply-chain?tab=suppliers', label: '협력사', desc: 'SUPPLIER_MASTER', icon: Factory },
         ],
       },

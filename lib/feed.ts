@@ -1,7 +1,7 @@
 import { SEVERITY_META } from './risk-config'
 import type { FeedEntry, NewsItem, NewsGroup, ResolvedGroup, Severity } from './types'
 
-const RISK_SEVERITIES: Severity[] = ['critical', 'high']
+const RISK_SEVERITIES: Severity[] = ['high']
 
 export function isRiskNews(n: NewsItem) {
   return RISK_SEVERITIES.includes(n.severity)

@@ -116,13 +116,13 @@
   --insight-border: oklch(0.9 0 0);
   --insight-muted: oklch(0.5 0.01 264);
 
-  /* ── Risk severity — muted, accent-driven, minimal chroma ── */
+  /* ── Risk severity — 3단 체계(High/Medium/Low) 신호등: 빨강/주황/초록 ── */
   --risk-critical: oklch(0.62 0.18 25);
   --risk-critical-bg: oklch(0.97 0.02 25);
-  --risk-high: oklch(0.68 0.14 52);
-  --risk-high-bg: oklch(0.97 0.02 55);
-  --risk-medium: oklch(0.72 0.1 90);
-  --risk-medium-bg: oklch(0.97 0.02 95);
+  --risk-high: oklch(0.62 0.18 25);
+  --risk-high-bg: oklch(0.97 0.02 25);
+  --risk-medium: oklch(0.68 0.14 52);
+  --risk-medium-bg: oklch(0.97 0.02 55);
   --risk-low: oklch(0.58 0.1 155);
   --risk-low-bg: oklch(0.97 0.02 158);
 }
@@ -168,13 +168,13 @@
   --insight-border: oklch(1 0 0 / 0.09);
   --insight-muted: oklch(0.6 0.005 264);
 
-  /* risk severity tokens (dark — low saturation) */
+  /* risk severity tokens (dark — 3단 체계 신호등: 빨강/주황/초록) */
   --risk-critical: oklch(0.7 0.15 25);
   --risk-critical-bg: oklch(0.25 0.06 25);
-  --risk-high: oklch(0.75 0.12 52);
-  --risk-high-bg: oklch(0.26 0.05 55);
-  --risk-medium: oklch(0.78 0.09 90);
-  --risk-medium-bg: oklch(0.26 0.04 92);
+  --risk-high: oklch(0.7 0.15 25);
+  --risk-high-bg: oklch(0.25 0.06 25);
+  --risk-medium: oklch(0.75 0.12 52);
+  --risk-medium-bg: oklch(0.26 0.05 55);
   --risk-low: oklch(0.7 0.1 155);
   --risk-low-bg: oklch(0.24 0.05 158);
 }

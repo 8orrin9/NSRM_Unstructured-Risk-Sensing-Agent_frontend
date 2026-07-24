@@ -1,4 +1,4 @@
-export type Severity = 'critical' | 'high' | 'medium' | 'low'
+export type Severity = 'high' | 'medium' | 'low'
 
 export type RiskCategory =
   | 'geopolitical'

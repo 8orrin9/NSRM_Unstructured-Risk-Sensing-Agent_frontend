@@ -7,6 +7,21 @@ export function formatTime(iso: string) {
   })
 }
 
+export function formatDateTime(iso: string) {
+  // "MM.DD HH:mm" (예: "06.25 06:00"). 날짜만 있는 값도 방어적으로 처리.
+  const d = new Date(iso)
+  const datePart = d.toLocaleDateString('ko-KR', {
+    month: '2-digit',
+    day: '2-digit',
+  }).replace(/\.\s?/g, '.').replace(/\.$/, '')
+  const timePart = d.toLocaleTimeString('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  return `${datePart} ${timePart}`
+}
+
 export function formatDate(iso: string) {
   const d = new Date(iso)
   return d.toLocaleDateString('ko-KR', {

@@ -16,21 +16,13 @@ export const SEVERITY_META: Record<
   Severity,
   { ko: string; en: string; order: number; token: string }
 > = {
-  critical: { ko: '심각', en: 'Critical', order: 0, token: 'risk-critical' },
-  high: { ko: '높음', en: 'High', order: 1, token: 'risk-high' },
-  medium: { ko: '보통', en: 'Medium', order: 2, token: 'risk-medium' },
-  low: { ko: '낮음', en: 'Low', order: 3, token: 'risk-low' },
+  high: { ko: '높음', en: 'High', order: 0, token: 'risk-high' },
+  medium: { ko: '보통', en: 'Medium', order: 1, token: 'risk-medium' },
+  low: { ko: '낮음', en: 'Low', order: 2, token: 'risk-low' },
 }
 
 export function severityClasses(sev: Severity) {
   switch (sev) {
-    case 'critical':
-      return {
-        text: 'text-risk-critical',
-        bg: 'bg-risk-critical-bg',
-        dot: 'bg-risk-critical',
-        border: 'border-risk-critical/40',
-      }
     case 'high':
       return {
         text: 'text-risk-high',
@@ -113,9 +105,8 @@ export const RISK_FACTORS: Record<RiskFactor, RiskFactorMeta> = {
 }
 
 export const SEVERITY_HEX: Record<Severity, string> = {
-  critical: '#c0392b',
-  high: '#e07b1a',
-  medium: '#d4a017',
+  high: '#c0392b',
+  medium: '#e07b1a',
   low: '#2e9e5b',
 }
 

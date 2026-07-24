@@ -10,7 +10,7 @@ import type { EntityType, FeedEntry, NewsItem, NewsGroup, ResolvedGroup, Severit
 import { SeverityBadge, CategoryBadge } from '@/components/risk-badges'
 import { NewsPanel } from '@/components/explorer/news-panel'
 import { NewsOverlay } from '@/components/news-overlay'
-import { formatTime } from '@/lib/format'
+import { formatDateTime } from '@/lib/format'
 import { fetchNewsById } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import {
@@ -37,7 +37,7 @@ const RiskMap = dynamic(() => import('@/components/explorer/risk-map'), {
   ),
 })
 
-const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
+const SEVERITIES: Severity[] = ['high', 'medium', 'low']
 
 function isoDate(iso: string) {
   return iso.slice(0, 10)
@@ -45,7 +45,7 @@ function isoDate(iso: string) {
 
 const TYPE_META: Record<EntityType, { ko: string; icon: typeof Building2 }> = {
   supplier: { ko: '공급사', icon: Building2 },
-  site: { ko: '자사 거점', icon: Factory },
+  site: { ko: '자사 생산지', icon: Factory },
   material: { ko: '원자재', icon: Boxes },
 }
 
@@ -247,9 +247,9 @@ export function RiskExplorer() {
           <Globe2 className="size-4" />
           <span className="text-xs font-semibold uppercase tracking-wide">Explorer MAP</span>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Daily News 관련 거점 · 공급사 탐색</h1>
+        <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Daily News 관련 생산지 · 공급사 탐색</h1>
         <p className="text-sm text-muted-foreground">
-          Daily News에서 도출된 거점·공급사를 지도에서 탐색합니다. 뉴스를 선택하면 관련 거점이 강조되고, 지도에서 거점을 클릭하면 관련 뉴스를 확인할 수 있습니다.
+          Daily News에서 도출된 생산지·공급사를 지도에서 탐색합니다. 뉴스를 선택하면 관련 생산지가 강조되고, 지도에서 생산지를 클릭하면 관련 뉴스를 확인할 수 있습니다.
         </p>
       </div>
 
@@ -281,7 +281,7 @@ export function RiskExplorer() {
               )}
             >
               <Layers className="size-3.5" />
-              거점 / 공급사
+              생산지 / 공급사
             </button>
           </div>
 
@@ -335,7 +335,7 @@ export function RiskExplorer() {
                 {selectedNewsId && (
                   <div className="flex items-center gap-2 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs text-primary">
                     <span className="size-1.5 rounded-full bg-primary" />
-                    뉴스 선택됨 — 지도에서 관련 거점 {highlightedEntityIds.length}개 강조 중
+                    뉴스 선택됨 — 지도에서 관련 생산지 {highlightedEntityIds.length}개 강조 중
                     <button onClick={() => setSelectedNewsId(null)} className="ml-auto font-semibold hover:opacity-70">
                       해제
                     </button>
@@ -404,7 +404,7 @@ export function RiskExplorer() {
                   <input
                     value={entityQuery}
                     onChange={(e) => setEntityQuery(e.target.value)}
-                    placeholder="거점·공급사·국가 검색"
+                    placeholder="생산지·공급사·국가 검색"
                     className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-3 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -413,7 +413,7 @@ export function RiskExplorer() {
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
                     <tr className="text-left text-[10px] text-muted-foreground">
-                      <th className="px-3 py-2 font-medium">거점 / 공급사</th>
+                      <th className="px-3 py-2 font-medium">생산지 / 공급사</th>
                       <th className="px-3 py-2 font-medium">상태</th>
                       <th className="px-3 py-2 text-right font-medium">관련 뉴스</th>
                     </tr>
@@ -494,7 +494,7 @@ export function RiskExplorer() {
           {highlightedEntityIds.length > 0 && (
             <div className="pointer-events-none absolute right-3 top-3 z-[400] flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs text-primary backdrop-blur">
               <span className="size-1.5 rounded-full bg-primary" />
-              관련 거점 {highlightedEntityIds.length}개 강조 중
+              관련 생산지 {highlightedEntityIds.length}개 강조 중
             </div>
           )}
         </div>
@@ -554,13 +554,13 @@ function ExplorerNewsItem({
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex items-center gap-1.5">
             <CategoryBadge category={news.category} />
-            <span className="text-[10px] text-muted-foreground">{formatTime(news.publishedAt)}</span>
+            <span className="text-[10px] text-muted-foreground">{formatDateTime(news.publishedAt)}</span>
             <SeverityBadge severity={news.severity} format="en" className="ml-auto shrink-0" />
           </div>
           <h4 className="text-pretty text-xs font-semibold leading-snug text-foreground">{news.title}</h4>
           {news.relatedEntityIds.length > 0 && (
             <span className="text-[10px] text-primary">
-              관련 거점 {news.relatedEntityIds.length}개
+              관련 생산지 {news.relatedEntityIds.length}개
             </span>
           )}
           {/* Detail overlay button — 우측 하단 화살표 */}
@@ -631,7 +631,7 @@ function ExplorerGroupItem({
                 <span className={cn('mt-1 size-1.5 shrink-0 rounded-full', severityClasses(news.severity).dot)} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-foreground line-clamp-2">{news.title}</p>
-                  <span className="text-[10px] text-muted-foreground">{formatTime(news.publishedAt)}</span>
+                  <span className="text-[10px] text-muted-foreground">{formatDateTime(news.publishedAt)}</span>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); onOpenNewsOverlay(news.id) }}

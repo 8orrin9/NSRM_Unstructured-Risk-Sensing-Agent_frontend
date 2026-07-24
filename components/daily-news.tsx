@@ -7,7 +7,7 @@ import { buildFeed } from '@/lib/feed'
 import { RISK_CATEGORIES, RISK_FACTORS, SEVERITY_META, CATEGORY_COLORS, severityClasses } from '@/lib/risk-config'
 import { severityToKorean } from '@/lib/severity'
 import type { FeedEntry, NewsItem, RiskCategory, RiskFactor, ResolvedGroup, Severity, NewsGroup, SupplyEntity } from '@/lib/types'
-import { formatDate, formatTime } from '@/lib/format'
+import { formatDate, formatDateTime } from '@/lib/format'
 import { SeverityBadge, CategoryBadge } from '@/components/risk-badges'
 import { NewsOverlay } from '@/components/news-overlay'
 import { cn } from '@/lib/utils'
@@ -25,7 +25,7 @@ import {
   CalendarDays,
 } from 'lucide-react'
 
-const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
+const SEVERITIES: Severity[] = ['high', 'medium', 'low']
 const PAGE_SIZE = 5
 const GROUP_INITIAL = 6 // Risk Groups 초기 노출 수
 const GROUP_STEP = 3 // 더보기 클릭당 추가 노출 수
@@ -144,7 +144,7 @@ export function DailyNews() {
   const today = NEWS.length > 0 && NEWS[0]?.publishedAt ? NEWS[0].publishedAt : new Date().toISOString()
 
   const sevCounts = useMemo(() => {
-    const c: Record<Severity, number> = { critical: 0, high: 0, medium: 0, low: 0 }
+    const c: Record<Severity, number> = { high: 0, medium: 0, low: 0 }
     NEWS.forEach((n) => (c[n.severity] += 1))
     return c
   }, [NEWS])
@@ -292,7 +292,7 @@ export function DailyNews() {
               const open = !collapsedFactorRows.has(rowIndex)
               const topSeverity = items.reduce<Severity | null>((best, n) => {
                 if (!best) return n.severity
-                const order: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+                const order: Record<Severity, number> = { high: 0, medium: 1, low: 2 }
                 return order[n.severity] < order[best] ? n.severity : best
               }, null)
               return (
@@ -387,7 +387,7 @@ export function DailyNews() {
                   >
                     <div className="flex items-center justify-between">
                       <SeverityBadge severity={n.severity} />
-                      <span className="text-xs text-insight-muted">{formatTime(n.publishedAt)}</span>
+                      <span className="text-xs text-insight-muted">{formatDateTime(n.publishedAt)}</span>
                     </div>
                     <h3 className="text-pretty text-sm font-semibold leading-snug text-insight-card-foreground">{n.title}</h3>
                     <p className="line-clamp-3 text-xs leading-relaxed text-insight-muted">{n.summary}</p>
@@ -565,7 +565,7 @@ function FactorCard({
                 >
                   <span className={cn('mt-1.5 size-2 shrink-0 rounded-full', nc.dot)} />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-[11px] text-muted-foreground">{formatTime(n.publishedAt)} · {n.source}</span>
+                    <span className="text-[11px] text-muted-foreground">{formatDateTime(n.publishedAt)} · {n.source}</span>
                     <span className="line-clamp-2 text-xs font-medium leading-snug text-foreground">{n.title}</span>
                   </div>
                 </button>
@@ -631,7 +631,7 @@ function GroupCard({
         </div>
         <h3 className="text-pretty text-sm font-bold leading-snug text-insight-card-foreground">{group.title}</h3>
         <span className="text-xs text-insight-muted">
-          뉴스 발행 시각 {formatTime(group.earliestAt)} → {formatTime(group.latestAt)}
+          뉴스 발행 시각 {formatDateTime(group.earliestAt)} → {formatDateTime(group.latestAt)}
         </span>
       </button>
 
@@ -645,7 +645,7 @@ function GroupCard({
               <p className="text-xs leading-relaxed text-insight-muted">{group.rationale}</p>
               {entities.length > 0 && (
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] text-insight-muted">연관 거점:</span>
+                  <span className="text-[11px] text-insight-muted">연관 생산지:</span>
                   {visibleEntities.map((e) => (
                     <Link
                       key={e!.id}
@@ -684,7 +684,7 @@ function GroupCard({
                       className="flex w-full flex-col gap-1 rounded-md border border-insight-border bg-insight-bg px-3 py-2.5 text-left transition-colors hover:border-primary/60 hover:brightness-110"
                     >
                       <div className="flex items-center justify-between gap-1.5">
-                        <span className="text-[11px] text-insight-muted">{formatTime(n.publishedAt)} · {n.source}</span>
+                        <span className="text-[11px] text-insight-muted">{formatDateTime(n.publishedAt)} · {n.source}</span>
                         <SeverityBadge severity={n.severity} format="en" />
                       </div>
                       <span className="text-pretty text-xs font-semibold leading-snug text-insight-card-foreground">{n.title}</span>
@@ -720,7 +720,7 @@ function NewsCard({ news, onOpen }: {
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex items-center gap-2">
           <CategoryBadge category={news.category} />
-          <span className="text-xs text-insight-muted">{news.source} · {formatTime(news.publishedAt)}</span>
+          <span className="text-xs text-insight-muted">{news.source} · {formatDateTime(news.publishedAt)}</span>
           <SeverityBadge severity={news.severity} format="en" className="ml-auto shrink-0" />
         </div>
         <h3 className="text-pretty text-sm font-semibold leading-snug text-insight-card-foreground">{news.title}</h3>

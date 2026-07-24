@@ -8,7 +8,7 @@ export const NEWS: NewsItem[] = [
     source: 'Reuters',
     publishedAt: '2026-07-08T08:12:00+09:00',
     category: 'geopolitical',
-    severity: 'critical',
+    severity: 'high',
     summary:
       '중국군의 대규모 해상 훈련으로 대만 신주 지역 항만·공항 운영이 부분 통제되며 반도체 부품 반출입 지연 가능성이 제기됨.',
     detail:
@@ -42,7 +42,7 @@ export const NEWS: NewsItem[] = [
     source: 'NHK',
     publishedAt: '2026-07-08T06:55:00+09:00',
     category: 'disaster',
-    severity: 'critical',
+    severity: 'high',
     summary:
       '후쿠시마현 인근에서 규모 5.8 지진이 발생해 신에츠화학 시라카와 웨이퍼 공장이 안전 점검을 위해 일시 가동을 중단.',
     detail:

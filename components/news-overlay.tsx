@@ -38,7 +38,6 @@ export function NewsOverlay({
   news: NewsItem | null
   onClose: () => void
 }) {
-  const [fullTextExpanded, setFullTextExpanded] = useState(false)
   const [fullNews, setFullNews] = useState<NewsItem | null>(null)
   const [loading, setLoading] = useState(false)
   const [allEntities, setAllEntities] = useState<SupplyEntity[]>([])
@@ -93,9 +92,6 @@ export function NewsOverlay({
         .filter(Boolean)
     : []
 
-  // 원문 존재 여부 (기본 접힘, 펼칠 때만 노출)
-  const hasDetail = (displayNews?.detail.length || 0) > 0
-
   return (
     <>
       {/* Backdrop — 거점 상세 패널(z-[1300]) 위에 표시되도록 z-index 상향 */}
@@ -149,32 +145,17 @@ export function NewsOverlay({
                 <SummaryBullets summary={displayNews.summary} />
               </div>
 
-              {/* 2. 원문 Full Contents — 기본 접힘, 우측 "원문 보기" 링크 */}
-              {hasDetail && (
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => setFullTextExpanded(!fullTextExpanded)}
-                      className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
-                    >
-                      뉴스 원문 · Full Contents
-                      <span className="text-primary">{fullTextExpanded ? '접기' : '펼치기'}</span>
-                    </button>
-                    <a
-                      href={displayNews.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                    >
-                      원문 보기 <ExternalLink className="size-3.5" />
-                    </a>
-                  </div>
-                  {fullTextExpanded && (
-                    <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-                      {displayNews.detail}
-                    </p>
-                  )}
-                </div>
+              {/* 2. 원문 Full Contents — 클릭 시 원문 URL 새 탭 */}
+              {displayNews.url && (
+                <a
+                  href={displayNews.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+                >
+                  뉴스 원문 · Full Contents
+                  <ExternalLink className="size-3.5 text-primary" />
+                </a>
               )}
 
               {/* 3. AI Risk Core Insight — 판단 근거를 문장별 불렛포인트로 표기 */}

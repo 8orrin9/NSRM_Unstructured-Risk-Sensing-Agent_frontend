@@ -675,12 +675,6 @@ function GroupCard({
           인사이트 {group.items.length}건
         </span>
         <CategoryBadge category={group.category} />
-        {group.status === 'active' && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-insight-border bg-insight-card px-2 py-0.5 text-[11px] font-medium text-insight-muted">
-            <span className="size-1.5 animate-pulse rounded-full bg-risk-high" />
-            Live
-          </span>
-        )}
         <span className="ml-auto flex shrink-0 items-center gap-2">
           <SeverityBadge severity={group.severity} />
           <ChevronDown className={cn('size-4 text-insight-muted transition-transform', open && 'rotate-180')} />

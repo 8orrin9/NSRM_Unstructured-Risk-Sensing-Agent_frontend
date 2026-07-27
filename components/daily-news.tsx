@@ -182,7 +182,8 @@ export function DailyNews() {
     })
   }
 
-  const today = NEWS.length > 0 && NEWS[0]?.publishedAt ? NEWS[0].publishedAt : new Date().toISOString()
+  // 시연 목적: 오늘 날짜를 2026년 7월 27일로 하드코딩
+  const today = '2026-07-27T00:00:00.000Z'
 
   const sevCounts = useMemo(() => {
     const c: Record<Severity, number> = { high: 0, medium: 0, low: 0 }
@@ -218,7 +219,8 @@ export function DailyNews() {
   // 그룹 표시 결정(건수 필터·중복 병합)은 백엔드가 수행하고 DB(SERVING_GROUP_DISPLAY)에
   // 반영한다. 프론트는 서빙된 그룹을 그대로 렌더.
   const allGroups = useMemo(
-    () => feed.filter((e): e is Extract<FeedEntry, { kind: 'group' }> => e.kind === 'group'),
+    // 시연 목적: AI 핵심 인사이트 그룹을 상단 3개만 노출하도록 하드코딩
+    () => feed.filter((e): e is Extract<FeedEntry, { kind: 'group' }> => e.kind === 'group').slice(0, 3),
     [feed],
   )
 

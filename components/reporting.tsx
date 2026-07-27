@@ -188,6 +188,10 @@ export function Reporting({ initialGroupId, embedded }: { initialGroupId?: strin
     setView('preview')
     setSent(false)
     try {
+      // 시연 목적: 팝업(embedded)에서 AI가 연산하는 느낌을 주기 위한 인위적 로딩 지연
+      if (embedded) {
+        await new Promise((resolve) => setTimeout(resolve, 2600))
+      }
       const res = await generateReport({
         newsIds: selectedIds,
         sender,
@@ -457,7 +461,28 @@ export function Reporting({ initialGroupId, embedded }: { initialGroupId?: strin
                       </div>
                     </div>
                   )}
-                  {(draft || generating) && view === 'preview' && (
+                  {generating && !draft && (
+                    <div className="flex h-full min-h-[260px] items-center justify-center p-8 text-center">
+                      <div className="flex max-w-sm flex-col items-center gap-4 text-muted-foreground">
+                        <span className="relative grid size-14 place-items-center">
+                          <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+                          <span className="grid size-14 place-items-center rounded-full bg-primary/10">
+                            <Sparkles className="size-6 animate-pulse text-primary" />
+                          </span>
+                        </span>
+                        <div className="flex flex-col gap-1.5">
+                          <p className="text-sm font-semibold text-foreground">AI가 리포트를 작성하고 있습니다…</p>
+                          <p className="text-xs">선택한 뉴스를 분석하고 리스크 인사이트를 종합하는 중입니다.</p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
+                          <span className="size-1.5 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
+                          <span className="size-1.5 animate-bounce rounded-full bg-primary" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {draft && view === 'preview' && (
                     <div className="prose-report max-w-none p-6 text-sm text-foreground">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{draft}</ReactMarkdown>
                       {generating && <span className="ml-0.5 inline-block h-4 w-2 animate-pulse bg-primary align-middle" />}

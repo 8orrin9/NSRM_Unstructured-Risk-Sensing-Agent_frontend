@@ -219,9 +219,15 @@ export function DailyNews() {
   // 그룹 표시 결정(건수 필터·중복 병합)은 백엔드가 수행하고 DB(SERVING_GROUP_DISPLAY)에
   // 반영한다. 프론트는 서빙된 그룹을 그대로 렌더.
   const allGroups = useMemo(
-    // 시연 목적: AI 핵심 인사이트 그룹을 상단 4개(S1~S4)만 노출하도록 하드코딩
-    () => feed.filter((e): e is Extract<FeedEntry, { kind: 'group' }> => e.kind === 'group').slice(0, 4),
-    [feed],
+    // 시연 목적: AI 핵심 인사이트 그룹을 전부 노출하되, 순서는 날짜순이 아니라
+    // 서빙된 그룹 배열(DEMO_GROUPS: X1~X5 → S1~S4) 순서로 고정
+    () => {
+      const order = new Map(NEWS_GROUPS.map((g, i) => [g.id, i]))
+      return feed
+        .filter((e): e is Extract<FeedEntry, { kind: 'group' }> => e.kind === 'group')
+        .sort((a, b) => (order.get(a.group.id) ?? 0) - (order.get(b.group.id) ?? 0))
+    },
+    [feed, NEWS_GROUPS],
   )
 
   const allIndividuals = useMemo(() => {
@@ -771,6 +777,11 @@ function GroupCard({
                         <SeverityBadge severity={n.severity} />
                       </div>
                       <span className="text-pretty text-xs font-semibold leading-snug text-insight-card-foreground">{n.title}</span>
+                      {group.memberNotes?.[n.id] && (
+                        <span className="self-start rounded border border-insight-border bg-insight-card px-1.5 py-0.5 text-[10px] font-medium text-insight-muted">
+                          개별 판단: <span className="text-insight-card-foreground">{group.memberNotes[n.id]}</span>
+                        </span>
+                      )}
                       <span className="line-clamp-1 text-[11px] text-insight-muted">{n.summary}</span>
                     </button>
                   </div>

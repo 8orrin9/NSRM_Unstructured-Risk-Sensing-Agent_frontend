@@ -777,11 +777,6 @@ function GroupCard({
                         <SeverityBadge severity={n.severity} />
                       </div>
                       <span className="text-pretty text-xs font-semibold leading-snug text-insight-card-foreground">{n.title}</span>
-                      {group.memberNotes?.[n.id] && (
-                        <span className="self-start rounded border border-insight-border bg-insight-card px-1.5 py-0.5 text-[10px] font-medium text-insight-muted">
-                          개별 판단: <span className="text-insight-card-foreground">{group.memberNotes[n.id]}</span>
-                        </span>
-                      )}
                       <span className="line-clamp-1 text-[11px] text-insight-muted">{n.summary}</span>
                     </button>
                   </div>

@@ -83,7 +83,7 @@ export async function fetchNewsById(id: string): Promise<NewsItem> {
  * 뉴스 그룹 목록 조회
  */
 export async function fetchNewsGroups(): Promise<NewsGroup[]> {
-  // ⚠️ 시연 전용: P1~P3 + X1~X5 + S1~S4(DEMO_GROUPS)만 노출한다.
+  // ⚠️ 시연 전용: G1·H1 + P1~P3 + X1~X5 + S1~S4(DEMO_GROUPS)만 노출한다.
   //   백엔드 그룹 + 이란 더미 그룹 병합은 끈 상태.
   //   관리자가 localStorage로 숨긴 데모 그룹은 Daily News 인사이트에서도 제외한다.
   const hidden = getHiddenDemoGroupIds()
@@ -94,7 +94,7 @@ export async function fetchNewsGroups(): Promise<NewsGroup[]> {
  * 관리자: 검증된 전체 그룹(숨김 포함) + 노출 상태 조회
  */
 export async function fetchAdminGroups(): Promise<AdminGroup[]> {
-  // ⚠️ 시연 전용: P1~P3 + X1~X5 + S1~S4(DEMO_ADMIN_GROUPS)만 노출한다.
+  // ⚠️ 시연 전용: G1·H1 + P1~P3 + X1~X5 + S1~S4(DEMO_ADMIN_GROUPS)만 노출한다.
   //   백엔드 그룹 + 이란 더미 그룹 병합은 끈 상태. 백엔드가 꺼져 있어도 데모가 동작하도록
   //   fetch 실패는 무시하고 데모 그룹만 반환한다.
   const hidden = getHiddenDemoGroupIds()

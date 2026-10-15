@@ -10,7 +10,7 @@ import type {
 } from './types'
 
 import {
-  DUMMY_IRAN_NEWS, DUMMY_IRAN_GROUP, DUMMY_IRAN_ENTITIES, DUMMY_IRAN_ADMIN_GROUP,
+  DUMMY_IRAN_NEWS, DUMMY_IRAN_GROUP, DUMMY_IRAN_ENTITIES,
   DUMMY_REPORT_MARKDOWN,
   isDummyNewsId, isDummyEntityId, isDummyTagId, hasDummySelection,
   dummyNewsForEntity, dummyTagSupplyChain,
@@ -46,32 +46,14 @@ export async function fetchNews(params?: {
   if (params?.offset) query.set('offset', params.offset.toString())
   if (params?.domestic_only) query.set('domestic_only', 'true')
 
-  const url = `${API_BASE_URL}/news${query.toString() ? '?' + query.toString() : ''}`
-  const res = await fetch(url)
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch news: ${res.statusText}`)
+  // ⚠️ 시연 전용: N01~N23(DEMO_NEWS)만 노출한다.
+  //   백엔드 뉴스 + 이란 더미(DUMMY_IRAN_NEWS) 병합은 끈 상태.
+  //   원복하려면 이 블록을 git 이력(백엔드+이란 병합본)으로 되돌리면 된다.
+  let demo = DEMO_NEWS
+  if (params?.severity) {
+    demo = demo.filter((n) => n.severity === params.severity)
   }
-
-  const news: NewsItem[] = await res.json()
-
-  // 시연용 더미 병합. 국내 한정(domestic_only)에는 미포함.
-  if (!params?.domestic_only) {
-    // 엑셀 시연 뉴스(DEMO_NEWS)는 필터 없이 전부 노출(Low·협력사동향 포함).
-    // 기존/백엔드 뉴스 + 이란 더미는 Low·협력사동향(supply) 제거.
-    let demo = DEMO_NEWS
-    let dummies = DUMMY_IRAN_NEWS
-    if (params?.severity) {
-      demo = demo.filter((n) => n.severity === params.severity)
-      dummies = dummies.filter((n) => n.severity === params.severity)
-    }
-    const rest = [...dummies, ...news].filter(
-      (n) => n.severity !== 'low' && n.category !== 'supply',
-    )
-    return [...demo, ...rest]
-  }
-
-  return news
+  return demo
 }
 
 /**
@@ -101,44 +83,25 @@ export async function fetchNewsById(id: string): Promise<NewsItem> {
  * 뉴스 그룹 목록 조회
  */
 export async function fetchNewsGroups(): Promise<NewsGroup[]> {
-  const res = await fetch(`${API_BASE_URL}/news/groups`)
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch news groups: ${res.statusText}`)
-  }
-
-  const groups: NewsGroup[] = await res.json()
-  // 시연용 더미 그룹(이란 + 07.24 시연 3그룹) 병합.
-  // 관리자가 localStorage로 숨긴 데모 그룹은 Daily News 인사이트에서도 제외한다.
+  // ⚠️ 시연 전용: G1·H1 + P1~P3 + X1~X5 + S1~S4(DEMO_GROUPS)만 노출한다.
+  //   백엔드 그룹 + 이란 더미 그룹 병합은 끈 상태.
+  //   관리자가 localStorage로 숨긴 데모 그룹은 Daily News 인사이트에서도 제외한다.
   const hidden = getHiddenDemoGroupIds()
-  const demoGroups = DEMO_GROUPS.filter((g) => !hidden.has(g.id))
-  const iranGroups = hidden.has(DUMMY_IRAN_GROUP.id) ? [] : [DUMMY_IRAN_GROUP]
-  return [...demoGroups, ...iranGroups, ...groups]
+  return DEMO_GROUPS.filter((g) => !hidden.has(g.id))
 }
 
 /**
  * 관리자: 검증된 전체 그룹(숨김 포함) + 노출 상태 조회
  */
 export async function fetchAdminGroups(): Promise<AdminGroup[]> {
-  const res = await fetch(`${API_BASE_URL}/admin/groups`)
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch admin groups: ${res.statusText}`)
-  }
-
-  const groups: AdminGroup[] = await res.json()
-  // 시연용 더미 그룹(이란 + 07.24 시연 3그룹) 병합 — fetchNewsGroups와 동일 패턴.
-  // 데모 그룹의 노출 상태(currentlyShown)는 localStorage 숨김 집합으로 덮어쓴다.
+  // ⚠️ 시연 전용: G1·H1 + P1~P3 + X1~X5 + S1~S4(DEMO_ADMIN_GROUPS)만 노출한다.
+  //   백엔드 그룹 + 이란 더미 그룹 병합은 끈 상태. 백엔드가 꺼져 있어도 데모가 동작하도록
+  //   fetch 실패는 무시하고 데모 그룹만 반환한다.
   const hidden = getHiddenDemoGroupIds()
-  const demoAdminGroups = DEMO_ADMIN_GROUPS.map((g) => ({
+  return DEMO_ADMIN_GROUPS.map((g) => ({
     ...g,
     currentlyShown: !hidden.has(g.id),
   }))
-  const iranAdminGroup = {
-    ...DUMMY_IRAN_ADMIN_GROUP,
-    currentlyShown: !hidden.has(DUMMY_IRAN_ADMIN_GROUP.id),
-  }
-  return [...demoAdminGroups, iranAdminGroup, ...groups]
 }
 
 /**

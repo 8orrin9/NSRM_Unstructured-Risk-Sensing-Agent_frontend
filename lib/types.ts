@@ -55,6 +55,8 @@ export interface NewsGroup {
   newsIds: string[] // member news, chronological order
   rationale: string // why these are grouped / why it is a risk cluster
   status: 'active' | 'dissolving' // dynamic grouping state
+  severity?: Severity // 지정 시 멤버 최고 심각도 대신 이 값을 사용 (시연용 X 시나리오)
+  memberNotes?: Record<string, string> // newsId → 이 그룹 맥락에서의 "개별 판단" 라벨
 }
 
 // 관리자 화면용: 검증된 전체 그룹(숨김 포함) + 노출 상태
@@ -166,6 +168,7 @@ export interface ResolvedGroup {
   relatedEntityIds: string[]
   latestAt: string
   earliestAt: string
+  memberNotes?: Record<string, string>
 }
 
 // A unified daily-feed entry: either a multi-news group or a standalone news item

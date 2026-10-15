@@ -220,7 +220,7 @@ export function DailyNews() {
   // 반영한다. 프론트는 서빙된 그룹을 그대로 렌더.
   const allGroups = useMemo(
     // 시연 목적: AI 핵심 인사이트 그룹을 전부 노출하되, 순서는 날짜순이 아니라
-    // 서빙된 그룹 배열(DEMO_GROUPS: P1~P3 → X1~X5 → S1~S4) 순서로 고정
+    // 서빙된 그룹 배열(DEMO_GROUPS: G1·H1 → P1~P3 → X1~X5 → S1~S4) 순서로 고정
     () => {
       const order = new Map(NEWS_GROUPS.map((g, i) => [g.id, i]))
       return feed

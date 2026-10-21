@@ -21,7 +21,7 @@ import {
   isDemoNewsId, isDemoEntityId, demoNewsForEntity,
   isDemoSupplyTagId, demoTagSupplyChain,
   isDemoGroupId, demoGroupReport,
-  getHiddenDemoGroupIds, saveHiddenDemoGroupIds, DEMO_GROUP_IDS,
+  getHiddenDemoGroupIds, saveHiddenDemoGroupIds, DEMO_GROUP_IDS, sortDemoGroupsFeaturedFirst,
 } from './dummy-demo'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8007/api'
@@ -83,18 +83,18 @@ export async function fetchNewsById(id: string): Promise<NewsItem> {
  * 뉴스 그룹 목록 조회
  */
 export async function fetchNewsGroups(): Promise<NewsGroup[]> {
-  // ⚠️ 시연 전용: G1·H1 + P1~P3 + X1~X5 + S1~S4(DEMO_GROUPS)만 노출한다.
+  // ⚠️ 시연 전용: DEMO_GROUPS 중 X2 → P2 → S2만 기본 노출하고 나머지는 기본 숨김.
   //   백엔드 그룹 + 이란 더미 그룹 병합은 끈 상태.
   //   관리자가 localStorage로 숨긴 데모 그룹은 Daily News 인사이트에서도 제외한다.
   const hidden = getHiddenDemoGroupIds()
-  return DEMO_GROUPS.filter((g) => !hidden.has(g.id))
+  return sortDemoGroupsFeaturedFirst(DEMO_GROUPS).filter((g) => !hidden.has(g.id))
 }
 
 /**
  * 관리자: 검증된 전체 그룹(숨김 포함) + 노출 상태 조회
  */
 export async function fetchAdminGroups(): Promise<AdminGroup[]> {
-  // ⚠️ 시연 전용: G1·H1 + P1~P3 + X1~X5 + S1~S4(DEMO_ADMIN_GROUPS)만 노출한다.
+  // ⚠️ 시연 전용: DEMO_ADMIN_GROUPS(14그룹, X2·P2·S2 우선 정렬)만 노출한다.
   //   백엔드 그룹 + 이란 더미 그룹 병합은 끈 상태. 백엔드가 꺼져 있어도 데모가 동작하도록
   //   fetch 실패는 무시하고 데모 그룹만 반환한다.
   const hidden = getHiddenDemoGroupIds()

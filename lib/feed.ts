@@ -23,7 +23,7 @@ export function resolveGroup(groupId: string, NEWS: NewsItem[], NEWS_GROUPS: New
     .sort((a, b) => +new Date(a.publishedAt) - +new Date(b.publishedAt))
   if (items.length === 0) return null
 
-  const severity = maxSeverity(items)
+  const severity = group.severity ?? maxSeverity(items)
   // category = category of the most severe / latest driving item
   const driver = [...items].sort(
     (a, b) =>
@@ -44,6 +44,7 @@ export function resolveGroup(groupId: string, NEWS: NewsItem[], NEWS_GROUPS: New
     relatedEntityIds,
     latestAt: items[items.length - 1].publishedAt,
     earliestAt: items[0].publishedAt,
+    memberNotes: group.memberNotes,
   }
 }
 

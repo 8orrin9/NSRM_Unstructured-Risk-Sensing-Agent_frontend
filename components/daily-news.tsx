@@ -756,7 +756,8 @@ function GroupCard({
           </div>
 
           {/* Timeline — click news item to open overlay */}
-          <div className="overflow-y-auto border-t border-insight-border p-3" style={{ maxHeight: 240 }}>
+          {/* 기본 높이 240px, 같은 행의 다른 카드가 더 길면 남는 높이까지 채워 하단 빈 공간을 없앤다 */}
+          <div className="min-h-0 flex-[1_1_0px] overflow-y-auto border-t border-insight-border p-3" style={{ minHeight: 240 }}>
             <ol className="flex flex-col gap-1.5">
               {group.items.map((n, i) => (
                 <li key={n.id} className="flex gap-3 pl-1">

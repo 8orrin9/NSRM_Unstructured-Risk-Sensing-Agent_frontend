@@ -682,7 +682,6 @@ function GroupCard({
           <Layers className="size-3" />
           인사이트 {group.items.length}건
         </span>
-        <CategoryBadge category={group.category} />
         <span className="ml-auto flex shrink-0 items-center gap-2">
           <SeverityBadge severity={group.severity} />
           <ChevronDown className={cn('size-4 text-insight-muted transition-transform', open && 'rotate-180')} />
@@ -775,7 +774,11 @@ function GroupCard({
                         {i === group.items.length - 1 && (
                           <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">최신</span>
                         )}
-                        <SeverityBadge severity={n.severity} />
+                        {/* Risk Factor 카테고리는 그룹 헤더 대신 개별 뉴스에 표기 */}
+                        <span className="ml-auto flex shrink-0 items-center gap-1">
+                          <CategoryBadge category={n.category} className="px-1.5 text-[10px]" />
+                          <SeverityBadge severity={n.severity} />
+                        </span>
                       </div>
                       <span className="text-pretty text-xs font-semibold leading-snug text-insight-card-foreground">{n.title}</span>
                       <span className="line-clamp-1 text-[11px] text-insight-muted">{n.summary}</span>

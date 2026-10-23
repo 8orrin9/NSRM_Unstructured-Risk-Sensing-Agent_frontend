@@ -182,8 +182,8 @@ export function DailyNews() {
     })
   }
 
-  // 시연 목적: 오늘 날짜를 2026년 10월 12일로 하드코딩
-  const today = '2026-10-12T00:00:00.000Z'
+  // 시연 목적: 오늘 날짜를 2026년 10월 22일로 하드코딩 (시연 그룹 최신 뉴스 게재일 기준)
+  const today = '2026-10-22T00:00:00.000Z'
 
   const sevCounts = useMemo(() => {
     const c: Record<Severity, number> = { high: 0, medium: 0, low: 0 }
@@ -220,7 +220,7 @@ export function DailyNews() {
   // 반영한다. 프론트는 서빙된 그룹을 그대로 렌더.
   const allGroups = useMemo(
     // 시연 목적: AI 핵심 인사이트 그룹을 전부 노출하되, 순서는 날짜순이 아니라
-    // 서빙된 그룹 배열(fetchNewsGroups: X2 → P2 → S2 우선, 나머지는 기본 숨김) 순서로 고정
+    // 서빙된 그룹 배열(fetchNewsGroups: X2 → C1 → S2 우선, 나머지는 기본 숨김) 순서로 고정
     () => {
       const order = new Map(NEWS_GROUPS.map((g, i) => [g.id, i]))
       return feed
@@ -682,7 +682,6 @@ function GroupCard({
           <Layers className="size-3" />
           인사이트 {group.items.length}건
         </span>
-        <CategoryBadge category={group.category} />
         <span className="ml-auto flex shrink-0 items-center gap-2">
           <SeverityBadge severity={group.severity} />
           <ChevronDown className={cn('size-4 text-insight-muted transition-transform', open && 'rotate-180')} />
@@ -770,12 +769,17 @@ function GroupCard({
                       onClick={() => onOpenOverlay(n)}
                       className="flex w-full flex-col gap-1 rounded-md border border-insight-border bg-insight-bg px-3 py-2.5 text-left transition-colors hover:border-primary/60 hover:brightness-110"
                     >
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] text-insight-muted">{formatDateTime(n.publishedAt)} · {n.source}</span>
+                      {/* 메타행은 한 줄 고정: 시각(데모 데이터는 모두 00:00)은 생략하고 날짜만, 그래도 부족하면 출처명만 말줄임 */}
+                      <div className="flex items-center gap-1">
+                        <span className="min-w-0 truncate text-[11px] text-insight-muted" title={n.source}>{formatDateTime(n.publishedAt).slice(0, 5)} · {n.source}</span>
                         {i === group.items.length - 1 && (
-                          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">최신</span>
+                          <span className="shrink-0 rounded-full bg-primary/10 px-1 py-0.5 text-[10px] font-semibold text-primary">최신</span>
                         )}
-                        <SeverityBadge severity={n.severity} />
+                        {/* Risk Factor 카테고리는 그룹 헤더 대신 개별 뉴스에 표기 */}
+                        <span className="ml-auto flex shrink-0 items-center gap-1">
+                          <CategoryBadge category={n.category} className="px-1 text-[10px]" />
+                          <SeverityBadge severity={n.severity} />
+                        </span>
                       </div>
                       <span className="text-pretty text-xs font-semibold leading-snug text-insight-card-foreground">{n.title}</span>
                       <span className="line-clamp-1 text-[11px] text-insight-muted">{n.summary}</span>
